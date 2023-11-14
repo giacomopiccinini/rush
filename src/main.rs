@@ -4,7 +4,7 @@ use walkdir::WalkDir;
 use std::fs::{copy, create_dir_all};
 
 
-/// Rust implementation of bash' cp
+/// Rust implementation of bash cp
 #[derive(Parser, Debug)]
 struct Args {
     /// Source directory or file
@@ -24,6 +24,26 @@ fn main() {
     // Convert to path object
     let source_path = PathBuf::from(&args.source);
     let target_path = PathBuf::from(&args.target);
+
+    if source_path.is_dir(){
+        let sub_directories = WalkDir::new(&source_path)
+        .min_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.path().is_dir())
+        .map(|e| e.path()
+                  .strip_prefix(&args.source)
+                  .map(|p| p.to_path_buf()))
+        .filter_map(Result::ok)
+        .collect::<Vec<_>>();
+
+        for d in sub_directories.into_iter(){
+            println!("{:?}", d);
+        };
+    };
+
+
+
 
     // Get only the files, exclude the directories
     let files = if source_path.is_dir(){
@@ -71,6 +91,7 @@ fn main() {
                 copy(&source_path, &target_path.join(&file)).unwrap();
             } else{
                 // If it is a directory copy all files recursively
+                //println!("{:?}", &source_path.join(&file).);
                 copy(&source_path.join(&file), &target_path.join(&file)).unwrap();
             }
         } else {

@@ -23,8 +23,11 @@ fn main() {
     let source_path = PathBuf::from(&args.source);
     let target_path = PathBuf::from(&args.target);
 
+    // Understand if source path is a directory or a file
+    let source_is_dir = source_path.is_dir();
+
     // Only apply if the source is a directory
-    if source_path.is_dir() {
+    if source_is_dir {
         // Fetch all the subdirectories, these will need to be created first
         // Notice: we start at depth 1 so we remove the source itself
         let sub_directories = WalkDir::new(&source_path)
@@ -43,7 +46,7 @@ fn main() {
     };
 
     // Get only the files, exclude the directories
-    let files = if source_path.is_dir() {
+    let files = if source_is_dir {
         // If it is a directory, we retrieve all files recursively
         // and we strip of the source part, because this will need to be replaced
         WalkDir::new(&source_path)
@@ -65,7 +68,7 @@ fn main() {
     } else {
         // If it does not exists:
         // If the source is a directory, the target must be a directory too
-        if source_path.is_dir() {
+        if source_is_dir {
             // Create the target directory because it does not exist
             create_dir_all(&target_path).expect("Failed to create target directory");
             // Return that the target is a directory
@@ -82,7 +85,7 @@ fn main() {
         // If the target is a directory
         if target_is_dir == true {
             // If the source if a file, copy it in the target directory
-            if source_path.is_file() {
+            if !source_is_dir {
                 copy(&source_path, &target_path.join(&file)).expect("Can't copy file");
             } else {
                 // If it is a directory copy all files recursively

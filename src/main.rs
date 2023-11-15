@@ -25,7 +25,11 @@ fn main() {
     let source_path = PathBuf::from(&args.source);
     let target_path = PathBuf::from(&args.target);
 
+    // Only apply if the source is a directory
     if source_path.is_dir(){
+
+        // Fetch all the subdirectories, these will need to be created first
+        // Notice: we start at depth 1 so we remove the source itself
         let sub_directories = WalkDir::new(&source_path)
         .min_depth(1)
         .into_iter()
@@ -37,13 +41,11 @@ fn main() {
         .filter_map(Result::ok)
         .collect::<Vec<_>>();
 
-        for d in sub_directories.into_iter(){
-            println!("{:?}", d);
+        // Create all sub-directories i.e. recreate the directory structure
+        for sub_directory in sub_directories.into_iter(){
+            create_dir_all(&target_path.join(&sub_directory)).unwrap();
         };
     };
-
-
-
 
     // Get only the files, exclude the directories
     let files = if source_path.is_dir(){

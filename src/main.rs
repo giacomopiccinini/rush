@@ -38,7 +38,7 @@ fn main() {
 
         // Create all sub-directories i.e. recreate the directory structure
         for sub_directory in sub_directories.into_iter() {
-            create_dir_all(&target_path.join(&sub_directory)).unwrap();
+            create_dir_all(&target_path.join(&sub_directory)).expect("Failed to create sub-directory");
         }
     };
 
@@ -55,7 +55,7 @@ fn main() {
             .collect::<Vec<_>>()
     } else {
         // If it is a single file, we simply get its name and put it into a vector
-        vec![PathBuf::from(source_path.clone().file_name().unwrap())]
+        vec![PathBuf::from(source_path.clone().file_name().expect("Can't read file"))]
     };
 
     // Underdtand if the target path is a directory or not
@@ -67,7 +67,7 @@ fn main() {
         // If the source is a directory, the target must be a directory too
         if source_path.is_dir() {
             // Create the target directory because it does not exist
-            create_dir_all(&target_path).unwrap();
+            create_dir_all(&target_path).expect("Failed to create target directory");
             // Return that the target is a directory
             true
         } else {
@@ -83,11 +83,11 @@ fn main() {
         if target_is_dir == true {
             // If the source if a file, copy it in the target directory
             if source_path.is_file() {
-                copy(&source_path, &target_path.join(&file)).unwrap();
+                copy(&source_path, &target_path.join(&file)).expect("Can't copy file");
             } else {
                 // If it is a directory copy all files recursively
                 //println!("{:?}", &source_path.join(&file).);
-                copy(&source_path.join(&file), &target_path.join(&file)).unwrap();
+                copy(&source_path.join(&file), &target_path.join(&file)).expect("Can't copy file");
             }
         } else {
             copy(&source_path, &target_path).unwrap();

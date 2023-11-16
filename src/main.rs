@@ -12,12 +12,25 @@ pub struct App {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Copy files from a source to a target directory
+    /// Copy files from a source to a target 
     Cp(CpArgs),
+    /// Move files from a source to a target
+    Mv(MvArgs)
 }
 
 #[derive(Debug, Parser)]
 pub struct CpArgs {
+    /// Source directory or file
+    #[arg(required = true)]
+    source: String,
+
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct MvArgs {
     /// Source directory or file
     #[arg(required = true)]
     source: String,
@@ -37,6 +50,10 @@ fn main() {
         Command::Cp(args) => {
             // Call a function to handle the 'cp' command
             commands::cp::execute(args);
+        }
+        Command::Mv(args) => {
+            // Call a function to handle the 'mv' command
+            commands::mv::execute(args);
         }
     }
 }

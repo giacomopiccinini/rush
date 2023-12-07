@@ -12,10 +12,12 @@ pub struct App {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Copy files from a source to a target 
+    /// Copy files from a source to a target
     Cp(CpArgs),
     /// Move files from a source to a target
-    Mv(MvArgs)
+    Mv(MvArgs),
+    /// Count files and directories in a target directory
+    Count(CountArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -40,8 +42,14 @@ pub struct MvArgs {
     target: String,
 }
 
-fn main() {
+#[derive(Debug, Parser)]
+pub struct CountArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+}
 
+fn main() {
     // Init app
     let app = App::parse();
 
@@ -54,6 +62,10 @@ fn main() {
         Command::Mv(args) => {
             // Call a function to handle the 'mv' command
             commands::mv::execute(args);
+        }
+        Command::Count(args) => {
+            // Call a function to handle the 'mv' command
+            commands::count::execute(args);
         }
     }
 }

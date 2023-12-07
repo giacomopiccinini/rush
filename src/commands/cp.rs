@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 
 // Import the argument struct
-use crate::CpArgs; 
+use crate::CpArgs;
 
 pub fn execute(args: CpArgs) {
     // Convert to path object
@@ -86,4 +86,3 @@ pub fn execute(args: CpArgs) {
         }
     }
 }
-

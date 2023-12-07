@@ -13,24 +13,20 @@ pub fn execute(args: CountArgs) {
     }
     // If it is a directory
     else {
-        // Count number of files
-        let n_files = WalkDir::new(&target_path)
+        // Count files and directories
+        let (n_files, n_sub_directories) = WalkDir::new(&target_path)
             .max_depth(1)
             .into_iter()
             .filter_map(Result::ok)
-            .filter(|e| e.path().is_file())
-            .collect::<Vec<_>>()
-            .len();
-
-        // Count number of directories
-        let n_sub_directories = WalkDir::new(&target_path)
-            .min_depth(1)
-            .max_depth(1)
-            .into_iter()
-            .filter_map(Result::ok)
-            .filter(|e| e.path().is_dir())
-            .collect::<Vec<_>>()
-            .len();
+            .fold((0, 0), |(file_count, dir_count), entry| {
+                if entry.path().is_file() {
+                    (file_count + 1, dir_count)
+                } else if entry.path().is_dir() && entry.depth() == 1 {
+                    (file_count, dir_count + 1)
+                } else {
+                    (file_count, dir_count)
+                }
+            });
 
         // Print results
         println!("Files: {}", n_files);

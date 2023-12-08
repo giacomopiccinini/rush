@@ -22,6 +22,8 @@ enum Command {
     Imagesum(ImagesumArgs),
     /// Get video metadata
     Videosum(VideosumArgs),
+    /// Get audio metadata
+    Audiosum(AudiosumArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -67,6 +69,17 @@ pub struct VideosumArgs {
     target: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct AudiosumArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+
+    /// Flag for printing info on single file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    verbose: bool,
+}
+
 fn main() {
     // Init app
     let app = App::parse();
@@ -92,6 +105,10 @@ fn main() {
         Command::Videosum(args) => {
             // Call a function to handle the 'videosum' command
             commands::videosum::execute(args);
+        }
+        Command::Audiosum(args) => {
+            // Call a function to handle the 'videosum' command
+            commands::audiosum::execute(args);
         }
     }
 }

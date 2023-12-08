@@ -18,6 +18,8 @@ enum Command {
     Mv(MvArgs),
     /// Count files and directories in a target directory
     Count(CountArgs),
+    /// Get images metadata
+    Imagesum(ImagesumArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -49,6 +51,13 @@ pub struct CountArgs {
     target: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct ImagesumArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+}
+
 fn main() {
     // Init app
     let app = App::parse();
@@ -64,8 +73,12 @@ fn main() {
             commands::mv::execute(args);
         }
         Command::Count(args) => {
-            // Call a function to handle the 'mv' command
+            // Call a function to handle the 'count' command
             commands::count::execute(args);
+        }
+        Command::Imagesum(args) => {
+            // Call a function to handle the 'imagesum' command
+            commands::imagesum::execute(args);
         }
     }
 }

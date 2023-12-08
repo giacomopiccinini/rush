@@ -20,6 +20,8 @@ enum Command {
     Count(CountArgs),
     /// Get images metadata
     Imagesum(ImagesumArgs),
+    /// Get video metadata
+    Videosum(VideosumArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -58,6 +60,13 @@ pub struct ImagesumArgs {
     target: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct VideosumArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+}
+
 fn main() {
     // Init app
     let app = App::parse();
@@ -79,6 +88,10 @@ fn main() {
         Command::Imagesum(args) => {
             // Call a function to handle the 'imagesum' command
             commands::imagesum::execute(args);
+        }
+        Command::Videosum(args) => {
+            // Call a function to handle the 'videosum' command
+            commands::videosum::execute(args);
         }
     }
 }

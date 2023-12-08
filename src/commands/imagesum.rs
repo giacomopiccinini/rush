@@ -1,7 +1,6 @@
 use image::io::Reader as ImageReader;
 use std::collections::HashSet;
 use std::path::PathBuf;
-//use std::path::Path;
 use walkdir::WalkDir;
 
 use crate::ImagesumArgs;

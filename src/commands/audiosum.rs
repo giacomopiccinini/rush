@@ -18,6 +18,7 @@ pub fn execute(args: AudiosumArgs) {
 
     // Hash set for unique sample rates
     let mut unique_sample_rates: HashSet<u32> = HashSet::new();
+    let mut unique_durations: HashSet<u64> = HashSet::new();
 
     // Check if the given path is a file
     if path.is_file() {
@@ -76,6 +77,9 @@ pub fn execute(args: AudiosumArgs) {
                 // Add the sample rate
                 unique_sample_rates.insert(sample_rate);
 
+                // Add the duration
+                unique_durations.insert(duration);
+
                 // Increase file number
                 n_files += 1;
 
@@ -108,6 +112,9 @@ pub fn execute(args: AudiosumArgs) {
     println!("Total Files: {}", n_files);
     println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
     println!("Sample Rates: {:?} Hz", unique_sample_rates);
+    println!("Unique durations: {}", unique_durations.len());
+    println!("Min duration: {} s", *unique_durations.iter().min().unwrap());
+    println!("Max duration: {} s", *unique_durations.iter().max().unwrap());
 }
 
 // Function for getting relevant info of an audio file

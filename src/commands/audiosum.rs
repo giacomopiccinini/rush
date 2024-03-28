@@ -111,6 +111,7 @@ pub fn execute(args: AudiosumArgs) {
     // Always print the total duration and sample rates
     println!("Total Files: {}", n_files);
     println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
+    println!("Average Duration: {} s", total_duration / n_files as u64);
     println!("Sample Rates: {:?} Hz", unique_sample_rates);
     println!("Unique durations: {}", unique_durations.len());
     println!("Min duration: {} s", *unique_durations.iter().min().unwrap());

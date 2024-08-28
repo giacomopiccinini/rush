@@ -76,7 +76,6 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32)>) {
     println!("Unique durations: {}", unique_durations.len());
     println!("Min duration: {} s", *unique_durations.iter().min().unwrap());
     println!("Max duration: {} s", *unique_durations.iter().max().unwrap());
-    println!("Unique sample rates: {:?}", unique_sample_rates);
 }
 
 pub fn execute(args: AudiosumArgs) {

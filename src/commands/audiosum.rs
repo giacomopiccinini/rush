@@ -1,140 +1,100 @@
 use lofty::{AudioFile, Probe};
 use std::collections::HashSet;
-use std::fs;
 use std::path::PathBuf;
+use walkdir::WalkDir;
+use rayon::prelude::*;
 
 use crate::AudiosumArgs;
 
-pub fn execute(args: AudiosumArgs) {
-    // Init file counter
-    let mut n_files: i32 = 0;
+// Check if the file is an audio file
+fn is_audio_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| extensions.contains(&ext.to_lowercase()))
+        .unwrap_or(false)
+}
 
-    // Convert to path object
-    let path = PathBuf::from(&args.target);
-    let verbose = &args.verbose;
+// Process the entire directory, return a list composed of tuples of duration and sample rate
+fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, Vec<(u64, u32)>) {
+    let duration_sample_rate: Vec<_> = WalkDir::new(target)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|entry| !entry.file_type().is_dir())
+        .filter(|entry| is_audio_file(&entry.path().to_path_buf(), extensions))
+        .par_bridge()
+        .filter_map(|entry| process_audio(entry.path()))
+        .collect();
 
-    // Initialize a counter for the total duration
-    let mut total_duration: u64 = 0;
+    let counter = duration_sample_rate.len();
+    (counter, duration_sample_rate)
+}
 
-    // Hash set for unique sample rates
-    let mut unique_sample_rates: HashSet<u32> = HashSet::new();
-    let mut unique_durations: HashSet<u64> = HashSet::new();
+// Equivalent of process directory in case of a single audio file
+fn process_single_audio(path: &PathBuf) -> (usize, Vec<(u64, u32)>) {
+    process_audio(path)
+        .map(|info| (1, [info].into_iter().collect()))
+        .unwrap_or((0, Vec::new()))
+}
 
-    // Check if the given path is a file
-    if path.is_file() {
-        // Get the audio info for that single file
-        let (duration, sample_rate) = audio_info(&path);
+// Function for getting relevant info (duration and sample rate) of an audio file
+fn process_audio(path: &std::path::Path) -> Option<(u64, u32)>  {
 
-        // Add the duration of the file to the total duration
-        total_duration += duration;
+    let audio_file = Probe::open(path)
+    .and_then(|probe| probe.read())
+    .ok()?;
 
-        // Add the sample rate
-        unique_sample_rates.insert(sample_rate);
+    let properties = audio_file.properties();
+    let duration = properties.duration().as_secs();
+    let sample_rate = properties.sample_rate()?;
 
-        // Increase file number
-        n_files += 1;
+    Some((duration, sample_rate))
+}
 
-        // If verbose, print the audio info for each audio file
-        if *verbose {
-            // Define output string
-            let output = format!(
-                "File: {} | Duration: {} s| Sample Rate: {} Hz",
-                path.display(),
-                duration,
-                sample_rate
-            );
+// Compute and print the relevant info 
+fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32)>) {
 
-            // Print the output
-            println!("{}", output);
-        }
+    // Compute duration in seconds
+    let total_duration_seconds: u64 = audio_info.iter().map(|(duration, _)| duration).sum();
 
-    // If the given path is a directory
-    } else if path.is_dir() {
-        // Loop over all files in the directory
-        for audio in fs::read_dir(path).expect("Unable to read directory") {
-            // Get path to audio file
-            let audio_path = audio.expect("Failed to read entry").path();
+    // Compute all durations
+    let unique_durations: HashSet<&u64>= audio_info.iter().map(|(duration, _)| duration).collect();
 
-            // If the path is a file
-            if audio_path.is_file() {
-                // If the extension is not mp3 or wav, skip the file
-                // Use this to avoid that file with no extension (e.g. .gitkeep) make
-                // the script panic
-                if let Some(ext) = audio_path.extension() {
-                    if ext != "mp3" && ext != "wav" {
-                        continue;
-                    }
-                } else {
-                    continue; // Skip files with no extension
-                }
+    // Find all sample rates
+    let unique_sample_rates: HashSet<&u32> = audio_info.iter().map(|(_, sample_rate)| sample_rate).collect();
 
-                // Get duration and sample rate
-                let (duration, sample_rate) = audio_info(&audio_path);
-
-                // Add the duration of the file to the total duration
-                total_duration += duration;
-
-                // Add the sample rate
-                unique_sample_rates.insert(sample_rate);
-
-                // Add the duration
-                unique_durations.insert(duration);
-
-                // Increase file number
-                n_files += 1;
-
-                // If verbose, print the audio info for each audio file
-                if *verbose {
-                    // Define output string
-                    let output = format!(
-                        "File: {} | Duration: {} s| Sample Rate: {} Hz",
-                        audio_path.display(),
-                        duration,
-                        sample_rate
-                    );
-
-                    // Print the output
-                    println!("{}", output);
-                }
-            }
-        }
-    } else {
-        panic!("ERROR: Invalid path!");
-    }
-
-    // Get the hours, minutes and seconds from the total duration
-    let hours = total_duration / 3600;
-    let remainder = total_duration % 3600;
+    // Convert duration to hours, minutes and seconds
+    let hours = total_duration_seconds / 3600;
+    let remainder = total_duration_seconds % 3600;
     let minutes = remainder / 60;
     let seconds = remainder % 60;
 
-    // Always print the total duration and sample rates
-    println!("Total Files: {}", n_files);
+    // Print results
+    println!("Total files: {}", n_files);
     println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
-    println!("Average Duration: {} s", total_duration / n_files as u64);
+    println!("Average Duration: {} s", total_duration_seconds / n_files as u64);
     println!("Sample Rates: {:?} Hz", unique_sample_rates);
     println!("Unique durations: {}", unique_durations.len());
     println!("Min duration: {} s", *unique_durations.iter().min().unwrap());
     println!("Max duration: {} s", *unique_durations.iter().max().unwrap());
 }
 
-// Function for getting relevant info of an audio file
-fn audio_info(audio_path: &PathBuf) -> (u64, u32) {
-    // Try to open the file for probing. If it fails, throw an error.
-    // Then try to read the file. If reading fails, throw another error.
-    let tagged_file = Probe::open(audio_path)
-        .expect("ERROR: Bad path provided!")
-        .read()
-        .expect("ERROR: Failed to read file!");
+pub fn execute(args: AudiosumArgs) {
 
-    // Retrieve audio properties of the tagged file.
-    let properties = tagged_file.properties();
+    let target = PathBuf::from(&args.target);
+    let audio_extensions: HashSet<_> = ["mp3", "wav", "ogg", "flac", "aac", "m4a"]
+        .iter().map(|&s| s.to_lowercase()).collect();
 
-    // Calculate the duration of the audio in minutes and seconds.
-    let duration = properties.duration().as_secs();
+    if !target.is_dir() && !is_audio_file(&target, &audio_extensions) {
+        println!("Target is neither a directory nor an audio file.");
+        return;
+    }
 
-    // Get the sample rate
-    let sample_rate = properties.sample_rate().unwrap_or(0);
+    let (n_files, audio_info) = if target.is_dir() {
+        process_directory(&target, &audio_extensions)
+    } else {
+        process_single_audio(&target)
+    };
 
-    return (duration, sample_rate);
+    print_audio_summary(n_files, audio_info);
+
 }

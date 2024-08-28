@@ -69,6 +69,7 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32)>) {
     let seconds = remainder % 60;
 
     // Print results
+    println!("Total files: {}", n_files);
     println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
     println!("Average Duration: {} s", total_duration_seconds / n_files as u64);
     println!("Sample Rates: {:?} Hz", unique_sample_rates);

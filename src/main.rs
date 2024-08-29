@@ -24,6 +24,8 @@ enum Command {
     Videosum(VideosumArgs),
     /// Get audio metadata
     Audiosum(AudiosumArgs),
+    /// Get resize metadata
+    Resize(ResizeArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -80,6 +82,23 @@ pub struct AudiosumArgs {
     verbose: bool,
 }
 
+#[derive(Debug, Parser)]
+pub struct ResizeArgs {
+    /// Target file
+    #[arg(required = true)]
+    target: String,
+
+    #[arg(required = true)]
+    height: u32,
+
+    #[arg(required = true)]
+    width: u32,
+
+    /// Output file
+    #[arg(required = true)]
+    output: String,
+}
+
 fn main() {
     // Init app
     let app = App::parse();
@@ -109,6 +128,10 @@ fn main() {
         Command::Audiosum(args) => {
             // Call a function to handle the 'videosum' command
             commands::audiosum::execute(args);
+        }
+        Command::Resize(args) => {
+            // Call a function to handle the 'resize' command
+            commands::resize::execute(args);
         }
     }
 }

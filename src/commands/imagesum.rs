@@ -1,9 +1,7 @@
-use image::io::Reader as ImageReader;
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use walkdir::WalkDir;
-use std::io;
 
 use crate::ImagesumArgs;
 
@@ -62,13 +60,9 @@ fn process_single_image(path: &PathBuf) -> (usize, HashSet<(u32, u32)>) {
 
 /// Process a single image file and return its dimensions.
 fn process_image(path: &std::path::Path) -> Option<(u32, u32)> {
-    ImageReader::open(path)
-        .and_then(|reader| {
-            reader.into_dimensions()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-        })
+
+    image::image_dimensions(path)
         .map(|(width, height)| (height, width))
         .ok()
+
 }
-
-

@@ -4,9 +4,9 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-use crate::VideosumArgs;
+use crate::VideoSummaryArgs;
 
-pub fn execute(args: VideosumArgs) {
+pub fn execute(args: VideoSummaryArgs) {
     // Convert to path object
     let target = PathBuf::from(&args.target);
 

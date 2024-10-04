@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use walkdir::WalkDir;
 use rayon::prelude::*;
 
-use crate::AudiosumArgs;
+use crate::AudioSummaryArgs;
 
 // Check if the file is an audio file
 fn is_audio_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
@@ -78,7 +78,7 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32)>) {
     println!("Max duration: {} s", *unique_durations.iter().max().unwrap());
 }
 
-pub fn execute(args: AudiosumArgs) {
+pub fn execute(args: AudioSummaryArgs) {
 
     let target = PathBuf::from(&args.target);
     let audio_extensions: HashSet<_> = ["mp3", "wav", "ogg", "flac", "aac", "m4a"]

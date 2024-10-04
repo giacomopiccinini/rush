@@ -1,8 +1,5 @@
-// Declare submodules
-pub mod audiosum;
-pub mod count;
-pub mod cp;
-pub mod imagesum;
-pub mod mv;
-pub mod videosum;
-pub mod resize;
+// Declare main submodules
+pub mod audio;
+pub mod image;
+pub mod video;
+pub mod file;

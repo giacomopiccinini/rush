@@ -3,10 +3,10 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-use crate::ImagesumArgs;
+use crate::ImageSummaryArgs;
 
 // Execute the imagesum command
-pub fn execute(args: ImagesumArgs) {
+pub fn execute(args: ImageSummaryArgs) {
     let target = PathBuf::from(&args.target);
     let image_extensions: HashSet<_> = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"]
         .iter().map(|&s| s.to_lowercase()).collect();

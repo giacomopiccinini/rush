@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, Args};
 
 mod commands;
 
@@ -12,20 +12,74 @@ pub struct App {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Audio-related commands
+    Audio(AudioCommand),
+    /// Image-related commands
+    Image(ImageCommand),
+    /// Video-related commands
+    Video(VideoCommand),
+    /// File operations
+    File(FileCommand),
+}
+
+#[derive(Debug, Args)]
+struct AudioCommand {
+    #[clap(subcommand)]
+    command: AudioSubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum AudioSubCommand {
+    /// Get audio metadata
+    Summary(AudioSummaryArgs),
+    /// Split audio file into chunks
+    Split(AudioSplitArgs),
+    /// Resample audio file
+    Resample(AudioResampleArgs),
+}
+
+#[derive(Debug, Args)]
+struct ImageCommand {
+    #[clap(subcommand)]
+    command: ImageSubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum ImageSubCommand {
+    /// Get image metadata
+    Summary(ImageSummaryArgs),
+    /// Resize image
+    Resize(ImageResizeArgs),
+    // Add other image-related commands here
+}
+
+#[derive(Debug, Args)]
+struct VideoCommand {
+    #[clap(subcommand)]
+    command: VideoSubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum VideoSubCommand {
+    /// Get video metadata
+    Summary(VideoSummaryArgs),
+    // Add other video-related commands here
+}
+
+#[derive(Debug, Args)]
+struct FileCommand {
+    #[clap(subcommand)]
+    command: FileSubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum FileSubCommand {
     /// Copy files from a source to a target
     Cp(CpArgs),
     /// Move files from a source to a target
     Mv(MvArgs),
     /// Count files and directories in a target directory
     Count(CountArgs),
-    /// Get images metadata
-    Imagesum(ImagesumArgs),
-    /// Get video metadata
-    Videosum(VideosumArgs),
-    /// Get audio metadata
-    Audiosum(AudiosumArgs),
-    /// Get resize metadata
-    Resize(ResizeArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -58,32 +112,14 @@ pub struct CountArgs {
 }
 
 #[derive(Debug, Parser)]
-pub struct ImagesumArgs {
+pub struct ImageSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]
     target: String,
 }
 
 #[derive(Debug, Parser)]
-pub struct VideosumArgs {
-    /// Target directory or file
-    #[arg(required = true)]
-    target: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct AudiosumArgs {
-    /// Target directory or file
-    #[arg(required = true)]
-    target: String,
-
-    /// Flag for printing info on single file
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    verbose: bool,
-}
-
-#[derive(Debug, Parser)]
-pub struct ResizeArgs {
+pub struct ImageResizeArgs {
     /// Target file
     #[arg(required = true)]
     target: String,
@@ -99,39 +135,85 @@ pub struct ResizeArgs {
     output: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct AudioSummaryArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+
+    /// Flag for printing info on single file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    verbose: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct AudioSplitArgs {
+    /// Input file or directory
+    #[arg(required = true)]
+    input: String,
+
+    /// Chunk duration in seconds
+    #[arg(required = true)]
+    chunk_duration: f32,
+
+    /// Output directory
+    #[arg(required = true)]
+    output: String,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    delete_original: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct AudioResampleArgs {
+    /// Input file or directory
+    #[arg(required = true)]
+    input: String,
+
+    /// Target sample rate
+    #[arg(required = true)]
+    sr: u32,
+
+    /// Output directory
+    #[arg(required = true)]
+    output: String,
+
+    /// Replace original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    replace_original: bool,
+}
+
+
+#[derive(Debug, Parser)]
+pub struct VideoSummaryArgs {
+    /// Target directory or file
+    #[arg(required = true)]
+    target: String,
+}
+
 fn main() {
     // Init app
     let app = App::parse();
 
     // Run appropriate sub-command
     match app.command {
-        Command::Cp(args) => {
-            // Call a function to handle the 'cp' command
-            commands::cp::execute(args);
-        }
-        Command::Mv(args) => {
-            // Call a function to handle the 'mv' command
-            commands::mv::execute(args);
-        }
-        Command::Count(args) => {
-            // Call a function to handle the 'count' command
-            commands::count::execute(args);
-        }
-        Command::Imagesum(args) => {
-            // Call a function to handle the 'imagesum' command
-            commands::imagesum::execute(args);
-        }
-        Command::Videosum(args) => {
-            // Call a function to handle the 'videosum' command
-            commands::videosum::execute(args);
-        }
-        Command::Audiosum(args) => {
-            // Call a function to handle the 'videosum' command
-            commands::audiosum::execute(args);
-        }
-        Command::Resize(args) => {
-            // Call a function to handle the 'resize' command
-            commands::resize::execute(args);
+        Command::Audio(audio_command) => match audio_command.command {
+            AudioSubCommand::Summary(args) => commands::audio::summary::execute(args),
+            AudioSubCommand::Split(args) => commands::audio::split::execute(args),
+            AudioSubCommand::Resample(args) => commands::audio::resample::execute(args),
+        },
+        Command::Image(image_command) => match image_command.command {
+            ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
+            ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
+        },
+        Command::Video(video_command) => match video_command.command {
+            VideoSubCommand::Summary(args) => commands::video::summary::execute(args),
+        },
+        Command::File(file_command) => match file_command.command {
+            FileSubCommand::Cp(args) => commands::file::cp::execute(args),
+            FileSubCommand::Mv(args) => commands::file::mv::execute(args),
+            FileSubCommand::Count(args) => commands::file::count::execute(args),
         }
     }
 }

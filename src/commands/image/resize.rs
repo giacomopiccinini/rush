@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::collections::HashSet;
 use rayon::prelude::*;
 
-use crate::ResizeArgs;
+use crate::ImageResizeArgs;
 
 
 // Check if the file is an image file
@@ -33,7 +33,7 @@ fn resize_directory(input_paths: Vec<PathBuf>, output_paths: Vec<PathBuf>, width
 }
 
 // Execute the resize command
-pub fn execute(args: ResizeArgs) {
+pub fn execute(args: ImageResizeArgs) {
 
     // Convert to path
     let target = PathBuf::from(&args.target);

@@ -20,6 +20,8 @@ enum Command {
     Video(VideoCommand),
     /// File operations
     File(FileCommand),
+    /// Table operations
+    Table(TableCommand),
 }
 
 #[derive(Debug, Args)]
@@ -80,6 +82,18 @@ enum FileSubCommand {
     Mv(MvArgs),
     /// Count files and directories in a target directory
     Count(CountArgs),
+}
+
+#[derive(Debug, Args)]
+struct TableCommand {
+    #[clap(subcommand)]
+    command: TableSubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+enum TableSubCommand {
+    /// Get table schema
+    Schema(TableSchemaArgs),
 }
 
 #[derive(Debug, Parser)]
@@ -192,6 +206,15 @@ pub struct VideoSummaryArgs {
     target: String,
 }
 
+
+#[derive(Debug, Args)]
+pub struct TableSchemaArgs {
+    /// Target file
+    #[arg(required = true)]
+    target: String,
+}
+
+
 fn main() {
     // Init app
     let app = App::parse();
@@ -214,6 +237,9 @@ fn main() {
             FileSubCommand::Cp(args) => commands::file::cp::execute(args),
             FileSubCommand::Mv(args) => commands::file::mv::execute(args),
             FileSubCommand::Count(args) => commands::file::count::execute(args),
-        }
+        },
+        Command::Table(table_command) => match table_command.command {
+            TableSubCommand::Schema(args) => commands::table::schema::execute(args),
+        },
     }
 }

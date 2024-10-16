@@ -15,7 +15,7 @@ fn is_audio_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
 }
 
 // Process the entire directory, return a list composed of tuples of duration and sample rate
-fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, Vec<(u64, u32, u8, u8)>) {
+fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, Vec<(u128, u32, u8, u8)>) {
     let duration_sample_rate: Vec<_> = WalkDir::new(target)
         .into_iter()
         .filter_map(Result::ok)
@@ -30,14 +30,14 @@ fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, 
 }
 
 // Equivalent of process directory in case of a single audio file
-fn process_single_audio(path: &PathBuf) -> (usize, Vec<(u64, u32, u8, u8)>) {
+fn process_single_audio(path: &PathBuf) -> (usize, Vec<(u128, u32, u8, u8)>) {
     process_audio(path)
         .map(|info| (1, [info].into_iter().collect()))
         .unwrap_or((0, Vec::new()))
 }
 
 // Function for getting relevant info (duration and sample rate) of an audio file
-fn process_audio(path: &std::path::Path) -> Option<(u64, u32, u8, u8)>  {
+fn process_audio(path: &std::path::Path) -> Option<(u128, u32, u8, u8)>  {
 
     let audio_file = Probe::open(path)
     .and_then(|probe| probe.read())
@@ -49,7 +49,7 @@ fn process_audio(path: &std::path::Path) -> Option<(u64, u32, u8, u8)>  {
     let channels = properties.channels()?;
 
     // Get the duration in seconds
-    let duration = properties.duration().as_secs();
+    let duration = properties.duration().as_nanos();
 
     // Get the sample rate
     let sample_rate = properties.sample_rate()?;
@@ -61,13 +61,13 @@ fn process_audio(path: &std::path::Path) -> Option<(u64, u32, u8, u8)>  {
 }
 
 // Compute and print the relevant info 
-fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32, u8, u8)>) {
+fn print_audio_summary(n_files: usize, audio_info: Vec<(u128, u32, u8, u8)>) {
 
     // Compute duration in seconds
-    let total_duration_seconds: u64 = audio_info.iter().map(|(duration, _, _, _)| duration).sum();
+    let total_duration_seconds: u64 = audio_info.iter().map(|(duration, _, _, _)| (duration / 1_000_000_000) as u64).sum();
 
     // Compute all durations
-    let unique_durations: HashSet<&u64>= audio_info.iter().map(|(duration, _, _, _)| duration).collect();
+    let unique_durations: HashSet<&u128>= audio_info.iter().map(|(duration, _, _, _)| duration).collect();
 
     // Find all sample rates
     let unique_sample_rates: HashSet<&u32> = audio_info.iter().map(|(_, sample_rate, _, _)| sample_rate).collect();
@@ -92,8 +92,8 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u64, u32, u8, u8)>) {
     println!("Channels: {:?}", unique_channels);
     println!("Bit Depths: {:?}", unique_bit_depths);
     println!("Unique durations: {}", unique_durations.len());
-    println!("Min duration: {} s", *unique_durations.iter().min().unwrap());
-    println!("Max duration: {} s", *unique_durations.iter().max().unwrap());
+    println!("Min duration: {:} s", (**unique_durations.iter().min().unwrap() as f64 / 1_000_000_000 as f64));
+    println!("Max duration: {:} s", (**unique_durations.iter().max().unwrap() as f64 / 1_000_000_000 as f64));
 }
 
 pub fn execute(args: AudioSummaryArgs) {

@@ -52,7 +52,7 @@ enum ImageSubCommand {
     Summary(ImageSummaryArgs),
     /// Resize image
     Resize(ImageResizeArgs),
-    // Tassellat the image
+    /// Tessellate the image
     Tessellate(ImageTessellateArgs),
 }
 

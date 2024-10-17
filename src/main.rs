@@ -52,7 +52,8 @@ enum ImageSubCommand {
     Summary(ImageSummaryArgs),
     /// Resize image
     Resize(ImageResizeArgs),
-    // Add other image-related commands here
+    // Tassellat the image
+    Tessellate(ImageTessellateArgs),
 }
 
 #[derive(Debug, Args)]
@@ -150,6 +151,23 @@ pub struct ImageResizeArgs {
 }
 
 #[derive(Debug, Parser)]
+pub struct ImageTessellateArgs {
+    /// Target file
+    #[arg(required = true)]
+    target: String,
+
+    #[arg(required = true)]
+    n_vertical: u32,
+
+    #[arg(required = true)]
+    n_horizontal: u32,
+
+    /// Output file
+    #[arg(required = true)]
+    output: String,
+}
+
+#[derive(Debug, Parser)]
 pub struct AudioSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]
@@ -229,6 +247,7 @@ fn main() {
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
             ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
+            ImageSubCommand::Tessellate(args) => commands::image::tessellate::execute(args),
         },
         Command::Video(video_command) => match video_command.command {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),

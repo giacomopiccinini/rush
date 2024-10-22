@@ -38,6 +38,8 @@ enum AudioSubCommand {
     Split(AudioSplitArgs),
     /// Resample audio file
     Resample(AudioResampleArgs),
+    /// Shorten audio file
+    Shorten(AudioShortenArgs),
 }
 
 #[derive(Debug, Args)]
@@ -216,6 +218,25 @@ pub struct AudioResampleArgs {
     replace_original: bool,
 }
 
+#[derive(Debug, Parser)]
+pub struct AudioShortenArgs {
+    /// Input file or directory
+    #[arg(required = true)]
+    input: String,
+
+    /// Target length in seconds
+    #[arg(required = true)]
+    length: f32,
+
+    /// Output directory
+    #[arg(required = true)]
+    output: String,
+
+    /// Replace original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    replace_original: bool,
+}
+
 
 #[derive(Debug, Parser)]
 pub struct VideoSummaryArgs {
@@ -243,6 +264,7 @@ fn main() {
             AudioSubCommand::Summary(args) => commands::audio::summary::execute(args),
             AudioSubCommand::Split(args) => commands::audio::split::execute(args),
             AudioSubCommand::Resample(args) => commands::audio::resample::execute(args),
+            AudioSubCommand::Shorten(args) => commands::audio::shorten::execute(args),
         },
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),

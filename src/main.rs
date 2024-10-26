@@ -230,7 +230,7 @@ pub struct AudioTrimArgs {
     #[arg(required = true)]
     length: f32,
 
-    /// Output directory
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
 
@@ -238,7 +238,7 @@ pub struct AudioTrimArgs {
     #[arg(default_value_t = 0.0)]
     offset: f32,
 
-    /// Replace original file
+    /// Flag to enable overwriting of input file
     #[arg(long, action = clap::ArgAction::SetTrue)]
     overwrite: bool,
 }

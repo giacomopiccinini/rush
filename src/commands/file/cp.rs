@@ -28,7 +28,7 @@ pub fn execute(args: CpArgs) {
 
         // Create all sub-directories i.e. recreate the directory structure
         for sub_directory in sub_directories.into_iter() {
-            create_dir_all(&target_path.join(&sub_directory))
+            create_dir_all(target_path.join(&sub_directory))
                 .expect("Failed to create sub-directory");
         }
     };
@@ -73,13 +73,13 @@ pub fn execute(args: CpArgs) {
     // Copy all files
     for file in files {
         // If the target is a directory
-        if target_is_dir == true {
+        if target_is_dir {
             // If the source if a file, copy it in the target directory
             if !source_is_dir {
-                copy(&source_path, &target_path.join(&file)).expect("Can't copy file");
+                copy(&source_path, target_path.join(&file)).expect("Can't copy file");
             } else {
                 // If it is a directory copy all files recursively
-                copy(&source_path.join(&file), &target_path.join(&file)).expect("Can't copy file");
+                copy(source_path.join(&file), target_path.join(&file)).expect("Can't copy file");
             }
         } else {
             copy(&source_path, &target_path).unwrap();

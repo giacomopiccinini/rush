@@ -108,53 +108,51 @@ pub fn execute(args: VideoSummaryArgs) {
         println!("Unique Lengths: {}", len_count);
         println!("Min Length: {} s", len_min);
         println!("Max Length: {} s", len_max);
-    } else {
-        if ["ts", "mp4", "mkv"].contains(
-            &target
-                .extension()
-                .expect("Error with extension")
-                .to_str()
-                .unwrap(),
-        ) {
-            match ffmpeg::format::input(&target) {
-                Ok(context) => {
-                    for stream in context.streams() {
-                        // Get the duration
-                        let duration = stream.duration() as f64 * f64::from(stream.time_base());
+    } else if ["ts", "mp4", "mkv"].contains(
+        &target
+            .extension()
+            .expect("Error with extension")
+            .to_str()
+            .unwrap(),
+    ) {
+        match ffmpeg::format::input(&target) {
+            Ok(context) => {
+                for stream in context.streams() {
+                    // Get the duration
+                    let duration = stream.duration() as f64 * f64::from(stream.time_base());
 
-                        // Get the hours, minutes and seconds from the total duration
-                        let hours = duration as u64 / 3600;
-                        let remainder = duration as u64 % 3600;
-                        let minutes = remainder / 60;
-                        let seconds = remainder % 60;
+                    // Get the hours, minutes and seconds from the total duration
+                    let hours = duration as u64 / 3600;
+                    let remainder = duration as u64 % 3600;
+                    let minutes = remainder / 60;
+                    let seconds = remainder % 60;
 
-                        // Get the fps in a rational form
-                        let fps_rational = stream.rate();
+                    // Get the fps in a rational form
+                    let fps_rational = stream.rate();
 
-                        // Extract the numerator and denominator
-                        let fps_numerator = fps_rational.numerator() as u32;
-                        let fps_denominator = fps_rational.denominator() as u32;
+                    // Extract the numerator and denominator
+                    let fps_numerator = fps_rational.numerator() as u32;
+                    let fps_denominator = fps_rational.denominator() as u32;
 
-                        // Get the codec
-                        let codec = stream.codec();
+                    // Get the codec
+                    let codec = stream.codec();
 
-                        println!("Total videos: {}", 1);
-                        println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
-                        println!("FPS: {}/{}", fps_numerator, fps_denominator);
+                    println!("Total videos: {}", 1);
+                    println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
+                    println!("FPS: {}/{}", fps_numerator, fps_denominator);
 
-                        // If the codec is a video codec
-                        if codec.medium() == ffmpeg::media::Type::Video {
-                            if let Ok(video) = codec.decoder().video() {
-                                let height = video.height();
-                                let width = video.width();
+                    // If the codec is a video codec
+                    if codec.medium() == ffmpeg::media::Type::Video {
+                        if let Ok(video) = codec.decoder().video() {
+                            let height = video.height();
+                            let width = video.width();
 
-                                println!("Dimensions: {}x{}", height, width);
-                            }
+                            println!("Dimensions: {}x{}", height, width);
                         }
                     }
                 }
-                Err(error) => println!("error: {}", error),
             }
+            Err(error) => println!("error: {}", error),
         }
     }
 }

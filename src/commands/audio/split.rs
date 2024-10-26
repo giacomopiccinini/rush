@@ -49,7 +49,7 @@ fn process_path(path: &Path, chunk_duration_sec: f32, output_directory_path: &Pa
                 fs::create_dir_all(&new_output_path).expect("Failed to create output subdirectory");
                 process_path(&entry_path, chunk_duration_sec, &new_output_path, delete_original);
             } else if entry_path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("wav".to_string()) {
-                process_file(&entry_path, chunk_duration_sec, &new_output_path.parent().unwrap());
+                process_file(&entry_path, chunk_duration_sec, new_output_path.parent().unwrap());
                 if delete_original {
                     fs::remove_file(&entry_path).expect("Failed to delete original file");
                 }
@@ -62,7 +62,7 @@ fn process_path(path: &Path, chunk_duration_sec: f32, output_directory_path: &Pa
 
 fn process_file(path: &Path, chunk_duration_sec: f32, output_directory_path: &Path) {
     // Open the WAV file
-    let mut reader = WavReader::open(&path).expect("Failed to open WAV file");
+    let mut reader = WavReader::open(path).expect("Failed to open WAV file");
 
     // Extract info from file
     let spec = reader.spec();

@@ -17,19 +17,19 @@ fn is_image_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
 // Tessellate one image
 fn tessellate_image(input_path: &PathBuf, output: &PathBuf, n_vertical: u32, n_horizontal: u32) {
     // Open and decode the input image
-    let input_img = ImageReader::open(&input_path).unwrap().decode().unwrap();
+    let input_img = ImageReader::open(input_path).unwrap().decode().unwrap();
 
     // Get image dimensions
     let image_width = input_img.width();
     let image_height = input_img.height();
 
     // Compute the dimensions of each crop (patch)
-    let patch_width = image_width / n_horizontal as u32;
-    let patch_height = image_height / n_vertical as u32;
+    let patch_width = image_width / n_horizontal;
+    let patch_height = image_height / n_vertical;
 
     // Calculate the remaining pixels that can't be evenly distributed
-    let patch_width_left_over = image_width % n_horizontal as u32;
-    let patch_height_left_over = image_height % n_vertical as u32;
+    let patch_width_left_over = image_width % n_horizontal;
+    let patch_height_left_over = image_height % n_vertical;
 
     // Initialize vectors to store the start and end coordinates for each patch
     let mut horizontal_coordinates = vec![[0u32; 2]; n_horizontal as usize];
@@ -109,7 +109,7 @@ fn tessellate_image(input_path: &PathBuf, output: &PathBuf, n_vertical: u32, n_h
 fn tessellate_directory(input_paths: Vec<PathBuf>, output: &PathBuf, n_vertical: u32, n_horizontal: u32) {
     input_paths.into_par_iter()
         .for_each(|input_path| {
-            tessellate_image(&input_path, &output, n_vertical, n_horizontal);
+            tessellate_image(&input_path, output, n_vertical, n_horizontal);
         });
 }
 

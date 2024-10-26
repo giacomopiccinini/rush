@@ -53,7 +53,7 @@ fn process_path(path: &Path, target_sample_rate: u32, output_directory_path: &Pa
                 process_path(&entry_path, target_sample_rate, &new_output_path, replace_original);
             } else if entry_path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("wav".to_string()) {
                 // If the entry is a WAV file, process it
-                resample_file(&entry_path, target_sample_rate, &new_output_path.parent().unwrap(), replace_original);
+                resample_file(&entry_path, target_sample_rate, new_output_path.parent().unwrap(), replace_original);
             }
         });
     } else {
@@ -64,7 +64,7 @@ fn process_path(path: &Path, target_sample_rate: u32, output_directory_path: &Pa
 
 fn resample_file(path: &Path, target_sample_rate: u32, output_directory_path: &Path, replace_original: bool) {
     // Open the WAV file for reading
-    let mut reader = WavReader::open(&path).expect("Failed to open WAV file");
+    let mut reader = WavReader::open(path).expect("Failed to open WAV file");
 
     // Extract information from the WAV file
     let spec = reader.spec();

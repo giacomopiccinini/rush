@@ -92,8 +92,8 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u128, u32, u8, u8)>) {
     println!("Channels: {:?}", unique_channels);
     println!("Bit Depths: {:?}", unique_bit_depths);
     println!("Unique durations: {}", unique_durations.len());
-    println!("Min duration: {:} s", (**unique_durations.iter().min().unwrap() as f64 / 1_000_000_000 as f64));
-    println!("Max duration: {:} s", (**unique_durations.iter().max().unwrap() as f64 / 1_000_000_000 as f64));
+    println!("Min duration: {:} s", (**unique_durations.iter().min().unwrap() as f64 / 1_000_000_000_f64));
+    println!("Max duration: {:} s", (**unique_durations.iter().max().unwrap() as f64 / 1_000_000_000_f64));
 }
 
 pub fn execute(args: AudioSummaryArgs) {

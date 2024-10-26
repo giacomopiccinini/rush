@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand, Args};
 
+pub mod utils;
 mod commands;
 
 /// Rust implementation of bash commands
@@ -38,8 +39,8 @@ enum AudioSubCommand {
     Split(AudioSplitArgs),
     /// Resample audio file
     Resample(AudioResampleArgs),
-    /// Shorten audio file
-    Shorten(AudioShortenArgs),
+    /// Trim audio file
+    Trim(AudioTrimArgs),
 }
 
 #[derive(Debug, Args)]
@@ -219,7 +220,7 @@ pub struct AudioResampleArgs {
 }
 
 #[derive(Debug, Parser)]
-pub struct AudioShortenArgs {
+pub struct AudioTrimArgs {
     /// Input file or directory
     #[arg(required = true)]
     input: String,
@@ -232,9 +233,13 @@ pub struct AudioShortenArgs {
     #[arg(required = true)]
     output: String,
 
+    /// Start offset in seconds
+    #[arg(default_value_t = 0.0)]
+    offset: f32,
+
     /// Replace original file
     #[arg(long, action = clap::ArgAction::SetTrue)]
-    replace_original: bool,
+    overwrite: bool,
 }
 
 
@@ -264,7 +269,7 @@ fn main() {
             AudioSubCommand::Summary(args) => commands::audio::summary::execute(args),
             AudioSubCommand::Split(args) => commands::audio::split::execute(args),
             AudioSubCommand::Resample(args) => commands::audio::resample::execute(args),
-            AudioSubCommand::Shorten(args) => commands::audio::shorten::execute(args),
+            AudioSubCommand::Trim(args) => commands::audio::trim::execute(args),
         },
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),

@@ -37,6 +37,6 @@ pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: b
 
 // Find files and directories recursively
 pub fn find_files_and_directories_recursively(input: &Path) -> Result<Vec<fs::DirEntry>, io::Error> {
-    Ok(fs::read_dir(input)?.collect::<Result<Vec<_>, _>>()?)
+    fs::read_dir(input)?.collect::<Result<Vec<_>, _>>()
 }
 

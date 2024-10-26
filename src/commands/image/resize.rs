@@ -18,7 +18,7 @@ fn is_image_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
 
 // Resize one image
 fn resize_image(input_path: &PathBuf, output_path: &PathBuf, width: u32, height: u32, filter: FilterType) {
-    let input_img = ImageReader::open(&input_path).unwrap().decode().unwrap();
+    let input_img = ImageReader::open(input_path).unwrap().decode().unwrap();
     let output_img = resize(&input_img, width, height, filter);
     output_img.save(&output_path).unwrap();
 }

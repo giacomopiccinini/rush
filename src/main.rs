@@ -1,3 +1,4 @@
+#![deny(unused_crate_dependencies)]
 use clap::{Parser, Subcommand, Args};
 
 pub mod utils;

@@ -1536,7 +1536,6 @@ dependencies = [
  "bytes",
  "chrono",
  "fast-float",
- "flate2",
  "futures",
  "glob",
  "hashbrown 0.14.5",
@@ -1560,7 +1559,6 @@ dependencies = [
  "simdutf8",
  "tokio",
  "tokio-util",
- "zstd",
 ]
 
 [[package]]
@@ -2024,8 +2022,6 @@ dependencies = [
  "image",
  "lofty",
  "polars",
- "polars-io",
- "polars-lazy",
  "rayon",
  "rubato",
  "walkdir",

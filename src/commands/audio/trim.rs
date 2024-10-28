@@ -37,7 +37,7 @@ pub fn execute(args: AudioTrimArgs) {
 }
 
 
-//Process all the content (single file or directory of files)
+// Process all the content (single file or directory of files)
 fn process(input: &Path, offset: f32, length: f32, output: &Path, overwrite: bool) -> Result<()> {
 
     // Case of single input file

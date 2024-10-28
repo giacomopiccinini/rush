@@ -1,141 +1,168 @@
-use std::fs;
+use std::fs::copy;
 use std::path::Path;
 use hound::{WavReader, WavWriter, WavSpec, SampleFormat};
 use rayon::prelude::*;
 use rubato::{FftFixedInOut, Resampler};
+use walkdir::WalkDir;
+use std::path::PathBuf;
+use anyhow::{Context, Result};
 
+use crate::utils::{file_has_right_extension, perform_io_sanity_check};
 use crate::AudioResampleArgs;
+
+// Admissible extensions for this command
+const EXTENSIONS : [&str; 1] = ["wav"];
 
 pub fn execute(args: AudioResampleArgs) {
 
     // Parse the arguments
-    let input_path = Path::new(&args.input);  // Convert the input path string to a Path
-    let target_sample_rate: u32 = args.sr;
-    let output_directory_path = Path::new(&args.output);  // Convert the output directory path string to a Path
-    let replace_original: bool = args.replace_original;
+    let input = Path::new(&args.input);
+    let output = Path::new(&args.output);
 
-    // Perform sanity checks on the output directory
-    if !output_directory_path.exists() {
-        // If the output directory doesn't exist, create it
-        fs::create_dir_all(output_directory_path).expect("Failed to create output directory");
-    } else if output_directory_path.is_file() {
-        // If the output path is a file instead of a directory, print an error and exit
-        eprintln!("The provided output directory path is a file");
-        return;
+    let sr: u32 = args.sr;
+
+    let overwrite: bool = args.overwrite;
+
+    // Sanity checks on I/O
+    if let Err(e) = perform_io_sanity_check(input, output, false) {
+        eprintln!("Error - Can't proceed. Reason: {}", e);
     }
 
-    // Start processing the files
-    process_path(input_path, target_sample_rate, output_directory_path, replace_original);
-}
-
-fn process_path(path: &Path, target_sample_rate: u32, output_directory_path: &Path, replace_original: bool) {
-    if path.is_file() {
-        // If the path is a file, check if it's a WAV file and process it
-        if path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("wav".to_string()) {
-            resample_file(path, target_sample_rate, output_directory_path, replace_original);
+    // Process files
+    if let Err(e) = process(input, sr, output, overwrite) {
+        eprintln!("Error - Can't process. Error chain:");
+        for (i, cause) in e.chain().enumerate() {
+            eprintln!("  Cause {}: {}", i, cause);
         }
-    } else if path.is_dir() {
-        // If the path is a directory, read all entries in the directory
-        let entries: Vec<_> = fs::read_dir(path)
-            .expect("Failed to read directory")
-            .collect::<Result<Vec<_>, _>>()
-            .expect("Failed to collect directory entries");
-
-        // Process each entry in parallel using rayon
-        entries.par_iter().for_each(|entry| {
-            let entry_path = entry.path();
-            let relative_path = entry_path.strip_prefix(path).unwrap();
-            let new_output_path = output_directory_path.join(relative_path);
-
-            if entry_path.is_dir() {
-                // If the entry is a directory, create a corresponding output directory and process it recursively
-                fs::create_dir_all(&new_output_path).expect("Failed to create output subdirectory");
-                process_path(&entry_path, target_sample_rate, &new_output_path, replace_original);
-            } else if entry_path.extension().and_then(|ext| ext.to_str()).map(|s| s.to_lowercase()) == Some("wav".to_string()) {
-                // If the entry is a WAV file, process it
-                resample_file(&entry_path, target_sample_rate, new_output_path.parent().unwrap(), replace_original);
-            }
-        });
-    } else {
-        // If the path is neither a file nor a directory, print an error
-        eprintln!("The provided path is neither a file nor a directory");
     }
 }
 
-fn resample_file(path: &Path, target_sample_rate: u32, output_directory_path: &Path, replace_original: bool) {
-    // Open the WAV file for reading
-    let mut reader = WavReader::open(path).expect("Failed to open WAV file");
+// Process all the content (single file or directory of files)
+fn process(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()> {
 
-    // Extract information from the WAV file
+    // Case of single input file
+    if input.is_file() {
+        // Check if the file has the right extension and process it
+        file_has_right_extension(input, &EXTENSIONS)?;
+        process_file(input, sr, output, overwrite)
+            .with_context(|| format!("Failed to process file: {:?}", input))?;
+    }
+
+    // Case of input being a directory
+    else {
+
+        // Find all files
+        let files: Vec<PathBuf> = WalkDir::new(input)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
+        .map(|e| e.path().to_path_buf())
+        .collect();
+
+        // Parallel loop over entries
+        files.par_iter().try_for_each(|file| -> Result<()> {
+
+            // Relative path wrt input directory
+            let relative_path = file.strip_prefix(input)
+                .with_context(|| format!("Failed to strip prefix from path: {:?}", file))?;
+
+            // Nested output path
+            let file_output = output.join(relative_path);
+
+            // Ensure the output directory exists
+            if let Some(parent) = file_output.parent() {
+                std::fs::create_dir_all(parent)
+                    .with_context(|| format!("Failed to create output directory: {:?}", parent))?;
+            }
+
+            // Process the file
+            process_file(file, sr, &file_output, overwrite)
+                .with_context(|| format!("Failed to process file: {:?}", file))?;
+
+            Ok(())
+        })?;
+    } 
+    Ok(())
+}
+
+// Process a single file
+fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()>{
+
+    // Check that we can overwrite
+    if input == output && !overwrite {
+        return Err(anyhow::Error::msg("Can't overwrite files"))
+    }
+
+    // Open the WAV file
+    let mut reader = WavReader::open(input).with_context(|| "Failed to open WavReader")?;
+
+    // Extract info from file
     let spec = reader.spec();
+    let original_sr = spec.sample_rate;
     let channels = spec.channels as usize;
-    let original_sample_rate = spec.sample_rate;
 
     // If the original sample rate is the same as the target, no need to resample
-    if original_sample_rate == target_sample_rate {
-        return;
+    if original_sr == sr {
+
+        // Just copy the file if input does not coincide with output
+        if input != output {
+            copy(input, output).with_context(|| "Failed to copy file")?;
+        }
+
+        return Ok(());
     }
 
-    // Read all samples from the WAV file
-    let samples: Vec<i32> = reader.samples::<i32>().map(|s| s.unwrap()).collect();
-
-    // Convert samples to f64 and deinterleave into separate channels
-    let mut input: Vec<Vec<f64>> = vec![Vec::new(); channels];
-    for (i, &sample) in samples.iter().enumerate() {
-        input[i % channels].push(sample as f64 / i32::MAX as f64);
-    }
+    // Read samples, convert to f64, and deinterleave into channels in one pass
+    let mut samples: Vec<Vec<f64>> = vec![Vec::new(); channels];
+    reader
+        .samples::<i32>()
+        .map(|s| s.with_context(|| format!("Couldn't read samples from {:?}", input)))
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .enumerate()
+        .for_each(|(i, &sample)| {
+            samples[i % channels].push(sample as f64 / i32::MAX as f64);
+        });
 
     // Initialize the resampler
-    let input_frames = input[0].len(); // Number of frames per channel
     let mut resampler = FftFixedInOut::<f64>::new(
-        original_sample_rate as usize,
-        target_sample_rate as usize,
-        input_frames,
+        original_sr as usize,
+        sr as usize,
+        samples[0].len(),  // Number of frames per channel
         channels,
-    ).unwrap();
+    ).with_context(|| "Can't initiate resampler")?;
 
     // Perform the resampling
-    let output = resampler.process(&input, None).unwrap();
+    let resampled_64 = resampler.process(&samples, None).with_context(|| "Can't resample file")?;
 
-    // Convert the resampled data back to i32 and interleave channels
-    let num_channels = output.len();
-    let num_samples_per_channel = output[0].len();
-    let mut resampled: Vec<i32> = Vec::with_capacity(num_samples_per_channel * num_channels);
-    for i in 0..num_samples_per_channel {
-        for ch in 0..num_channels {
-            let sample = output[ch][i];
-            resampled.push((sample * i32::MAX as f64) as i32);
-        }
-    }
+    // Create a vector to store the interleaved i32 samples with pre-allocated capacity
+    let mut resampled_32 = Vec::with_capacity(resampled_64[0].len() * channels);
+    // Iterate through each frame
+    resampled_32.extend(
+        (0..resampled_64[0].len())
+            .flat_map(|i| resampled_64.iter()
+                .take(channels)
+                .map(move |channel| (channel[i] * i32::MAX as f64) as i32))
+    );
 
     // Create a new WAV specification for the resampled audio
-    let new_spec = WavSpec {
-        channels: spec.channels,
-        sample_rate: target_sample_rate,
+    let resampled_spec = WavSpec {
+        channels: channels as u16,
+        sample_rate: sr,
         bits_per_sample: spec.bits_per_sample,
         sample_format: SampleFormat::Int,
     };
 
-    // Determine the output path for the resampled file
-    let output_path = if replace_original {
-        path.to_path_buf()
-    } else {
-        let file_name = path.file_name().unwrap().to_str().unwrap();
-        let new_file_name = format!("{}_{}Hz.wav", file_name.trim_end_matches(".wav"), target_sample_rate);
-        output_directory_path.join(new_file_name)
-    };
+    // Init writer
+    let mut writer = WavWriter::create(output, resampled_spec).with_context(|| format!("Couldn't write to {:?}", output))?;
 
-    // Write the resampled data to a new WAV file
-    let mut writer = WavWriter::create(&output_path, new_spec).expect("Failed to create WAV file for writing");
-    for sample in resampled {
-        writer.write_sample(sample).unwrap();
-    }
+    // Write to file
+    resampled_32.iter()
+        .try_for_each(|&sample| {
+            writer.write_sample(sample)
+                .with_context(|| "Failed to write audio sample")
+        })?;
 
-    // Finalize the writer to ensure all data is written
-    writer.finalize().expect("Failed to finalize WAV file");
+    Ok(())
 
-    // If replacing the original and the output path is different, remove the original file
-    if replace_original && output_path != path {
-        fs::remove_file(path).expect("Failed to remove original file");
-    }
 }

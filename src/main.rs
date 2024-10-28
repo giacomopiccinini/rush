@@ -215,9 +215,9 @@ pub struct AudioResampleArgs {
     #[arg(required = true)]
     output: String,
 
-    /// Replace original file
+    /// Flag to enable overwriting of input file
     #[arg(long, action = clap::ArgAction::SetTrue)]
-    replace_original: bool,
+    overwrite: bool,
 }
 
 #[derive(Debug, Parser)]

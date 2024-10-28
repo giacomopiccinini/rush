@@ -139,20 +139,22 @@ pub struct ImageSummaryArgs {
 
 #[derive(Debug, Parser)]
 pub struct ImageResizeArgs {
-    /// Input file
+    /// Input file or directory
     #[arg(required = true)]
     input: String,
 
+    /// Requested height
     #[arg(required = true)]
     height: u32,
 
+    /// Requested width
     #[arg(required = true)]
     width: u32,
 
-    /// Output file
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
-    
+
     /// Flag to enable overwriting of input file
     #[arg(long, action = clap::ArgAction::SetTrue)]
     overwrite: bool,
@@ -160,19 +162,25 @@ pub struct ImageResizeArgs {
 
 #[derive(Debug, Parser)]
 pub struct ImageTessellateArgs {
-    /// Target file
+    /// Input file or directory
     #[arg(required = true)]
-    target: String,
+    input: String,
 
+    /// Number of vertical patches
     #[arg(required = true)]
     n_vertical: u32,
 
+    /// Number of horizontal patches
     #[arg(required = true)]
     n_horizontal: u32,
 
-    /// Output file
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    delete_original: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -180,10 +188,6 @@ pub struct AudioSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]
     target: String,
-
-    /// Flag for printing info on single file
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    verbose: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -215,7 +219,7 @@ pub struct AudioResampleArgs {
     #[arg(required = true)]
     sr: u32,
 
-    /// Output directory
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
 
@@ -288,7 +292,7 @@ fn main() {
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
             ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
-            ImageSubCommand::Tessellate(args) => Ok(commands::image::tessellate::execute(args)),
+            ImageSubCommand::Tessellate(args) => commands::image::tessellate::execute(args),
         },
         Command::Video(video_command) => Ok(match video_command.command {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),

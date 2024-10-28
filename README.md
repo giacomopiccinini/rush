@@ -17,7 +17,6 @@ A Swiss-army knife CLI tool for data inspection and manipulation, written in Rus
 `rush` is a command-line utility that provides various tools for working with multimedia files, data tables, and file system operations. It's designed to be fast and efficient, leveraging parallel processing where possible.
 
 ## Installation
-
 ```bash
 cargo install rush
 ```
@@ -28,6 +27,9 @@ cargo install rush
 
 #### `audio summary`
 Get metadata about audio files (a single file or a directory).
+
+**Supported Extensions**: `.mp3`, `.wav`, `.ogg`, `.flac`, `.aac`, `.m4a`  
+**Input**: Can be a single file or directory (recursive)
 
 ```bash
 rush audio summary <target>
@@ -54,6 +56,9 @@ Max duration: 345.2 s
 #### `audio split`
 Split audio files into chunks of specified duration.
 
+**Supported Extensions**: `.wav` only  
+**Input**: Can be a single file or directory (recursive)
+
 ```bash
 rush audio split <input> <chunk_duration> <output> [--delete-original]
 ```
@@ -68,6 +73,9 @@ This will split long.wav into 30-second chunks and save them in the `chunks/` di
 #### `audio resample`
 Change the sample rate of audio files.
 
+**Supported Extensions**: `.wav` only  
+**Input**: Can be a single file or directory (recursive)
+
 ```bash
 rush audio resample <input> <sr> <output> [--overwrite]
 ```
@@ -79,6 +87,9 @@ rush audio resample input.wav 44100 output.wav
 
 #### `audio trim`
 Trim audio files to a specified length.
+
+**Supported Extensions**: `.wav` only  
+**Input**: Can be a single file or directory (recursive)
 
 ```bash
 rush audio trim <input> <length> <output> [--offset <seconds>] [--overwrite]
@@ -93,6 +104,9 @@ rush audio trim input.wav 60 output.wav --offset 30
 
 #### `image summary`
 Get metadata about image files.
+
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`  
+**Input**: Can be a single file or directory (recursive)
 
 ```bash
 rush image summary <target>
@@ -112,6 +126,9 @@ Unique (height, width) pairs: {(1080, 1920), (800, 600), (3024, 4032)}
 #### `image resize`
 Resize images to specified dimensions.
 
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`  
+**Input**: Can be a single file or directory (recursive)
+
 ```bash
 rush image resize <input> <height> <width> <output> [--overwrite]
 ```
@@ -123,6 +140,9 @@ rush image resize input.jpg 1080 1920 output.jpg
 
 #### `image tessellate`
 Split images into a grid of smaller images.
+
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`  
+**Input**: Can be a single file or directory (recursive)
 
 ```bash
 rush image tessellate <input> <n_vertical> <n_horizontal> <output> [--delete-original]
@@ -139,6 +159,9 @@ This splits the image into a 2×3 grid (6 pieces).
 
 #### `video summary`
 Get metadata about video files.
+
+**Supported Extensions**: `.ts`, `.mp4`, `.mkv`, `.mov`  
+**Input**: Can be a single file or directory (recursive)
 
 ```bash
 rush video summary <target>
@@ -163,6 +186,9 @@ Unique FPS: {(30, 1), (60, 1)}
 #### `file count`
 Count files and directories in a given path.
 
+**Supported Extensions**: All files  
+**Input**: Can be a single file or directory (non-recursive, only immediate children)
+
 ```bash
 rush file count <target>
 ```
@@ -182,6 +208,9 @@ Directories: 12
 
 #### `table schema`
 Display the schema of a CSV or Parquet file.
+
+**Supported Extensions**: `.csv`, `.parquet`  
+**Input**: Single file only (directories not supported)
 
 ```bash
 rush table schema <input>

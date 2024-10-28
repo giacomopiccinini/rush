@@ -1,6 +1,7 @@
 use std::path::Path;
 use std::io;
-use std::fs;
+use anyhow::{Context, Result};
+use polars::prelude::*;
 
 // Check if file with given path has one of the desired extensions
 pub fn file_has_right_extension(path: &Path, extensions: &[&str]) -> Result<(), io::Error> {
@@ -11,7 +12,7 @@ pub fn file_has_right_extension(path: &Path, extensions: &[&str]) -> Result<(), 
 }
 
 // Check that I/O make sense
-pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: bool) -> Result<(), io::Error> {
+pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: bool, allow_output_file: bool) -> Result<(), io::Error> {
 
     // Check if input exists (be it a file or a directory)
     if !input.exists() {
@@ -26,6 +27,11 @@ pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: b
         std::fs::create_dir_all(output)?;
     }
 
+    // Deny output as a single file
+    if output_is_file && !allow_output_file{
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Output being a file is not allowed"));
+    }
+
     // Unless explicitly requested, it is not allowed to turn content of a directory into a single file
     if input.is_dir() && output_is_file && !allow_many_to_one {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "Cannot convert directory contents to a single file"));
@@ -34,9 +40,19 @@ pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: b
     Ok(())
 }
 
+// Read table
+pub fn read_table(path: &Path) -> Result<LazyFrame> {
+    // Extract extension
+    let extension = path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase())
+        .ok_or_else(|| anyhow::Error::msg("Failed to extract file extension"))?;
 
-// Find files and directories recursively
-pub fn find_files_and_directories_recursively(input: &Path) -> Result<Vec<fs::DirEntry>, io::Error> {
-    fs::read_dir(input)?.collect::<Result<Vec<_>, _>>()
+    match extension.as_str() {
+        "parquet" => LazyFrame::scan_parquet(path, Default::default())
+            .with_context(|| format!("Failed to read parquet file: {:?}", path)),
+        "csv" => LazyCsvReader::new(path).finish()
+            .with_context(|| format!("Failed to read CSV file: {:?}", path)),
+        _ => Err(anyhow::Error::msg("Unsupported file format")),
+    }
 }
-

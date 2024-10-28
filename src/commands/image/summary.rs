@@ -1,68 +1,74 @@
 use rayon::prelude::*;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use walkdir::WalkDir;
+use anyhow::{Context, Result};
+use image::image_dimensions;
+
+use crate::utils::{file_has_right_extension};
 
 use crate::ImageSummaryArgs;
 
-// Execute the imagesum command
-pub fn execute(args: ImageSummaryArgs) {
-    let target = PathBuf::from(&args.target);
-    let image_extensions: HashSet<_> = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"]
-        .iter().map(|&s| s.to_lowercase()).collect();
+// Admissible extensions for this command
+const EXTENSIONS : [&str; 6] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"];
 
-    if !target.is_dir() && !is_image_file(&target, &image_extensions) {
-        println!("Target is neither a directory nor an image file.");
-        return;
+
+pub fn execute(args: ImageSummaryArgs) -> Result<()> {
+
+    // Parse the arguments
+    let target = Path::new(&args.target);
+
+    // Error if it does not exist at all
+    if !target.exists() {
+        return Err(anyhow::Error::msg("Target file or directory does not exist"));
     }
 
-    let (counter, dimensions) = if target.is_dir() {
-        process_directory(&target, &image_extensions)
-    } else {
-        process_single_image(&target)
+    // Find all admissible files
+    let files: Vec<PathBuf> = match target.is_file() {
+        true => {
+            if file_has_right_extension(target, &EXTENSIONS).is_ok() {
+                vec![target.to_path_buf()]
+            } else {
+                vec![]
+            }
+        },
+        false => {
+            WalkDir::new(target)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
+            .map(|e| e.path().to_path_buf())
+            .collect()
+        },
     };
 
-    // Print the results
-    println!("Total images: {}", counter);
-    println!("Unique (height, width) pairs: {:?}", dimensions);
-}
+    // Raise error if no files are admissible
+    if files.is_empty(){
+        return Err(anyhow::Error::msg("No admissible image files detected"));
+    }
 
-// Check if the file is an image file
-fn is_image_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| extensions.contains(&ext.to_lowercase()))
-        .unwrap_or(false)
-}
-
-fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, HashSet<(u32, u32)>) {
-    let results: Vec<_> = WalkDir::new(target)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|entry| !entry.file_type().is_dir())
-        .filter(|entry| is_image_file(&entry.path().to_path_buf(), extensions))
-        .par_bridge()
-        .filter_map(|entry| process_image(entry.path()))
+    // Process files
+    let info: Vec<(u32, u32)> = files.into_par_iter()
+        .filter_map(|file| process_image(&file).ok())
         .collect();
 
-    let counter = results.len();
-    let dimensions: HashSet<_> = results.into_iter().collect();
-    (counter, dimensions)
+    // Calculate total number of files
+    let n_files = info.len();
+
+    // Get unique values
+    let unique_shapes: HashSet<_> = info.into_iter().collect();
+
+    // Print results
+    println!("Total files: {}", n_files);
+    println!("Unique (height, width) pairs: {:?}", unique_shapes);
+
+    Ok(())
 }
 
-// If image succesfully processed, return (1, {height, width})
-// If not, return (0, {})
-fn process_single_image(path: &PathBuf) -> (usize, HashSet<(u32, u32)>) {
-    process_image(path)
-        .map(|dims| (1, [dims].into_iter().collect()))
-        .unwrap_or((0, HashSet::new()))
-}
+// Function for getting relevant info of an image file by just probing it
+fn process_image(path: &Path) -> Result<(u32, u32)>  {
 
-/// Process a single image file and return its dimensions.
-fn process_image(path: &std::path::Path) -> Option<(u32, u32)> {
-
-    image::image_dimensions(path)
-        .map(|(width, height)| (height, width))
-        .ok()
-
+    image_dimensions(path)
+            .map(|(width, height)| (height, width))
+            .with_context(|| "Error extracting image dimensions")
 }

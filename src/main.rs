@@ -81,11 +81,7 @@ struct FileCommand {
 
 #[derive(Debug, Subcommand)]
 enum FileSubCommand {
-    /// Copy files from a source to a target
-    Cp(CpArgs),
-    /// Move files from a source to a target
-    Mv(MvArgs),
-    /// Count files and directories in a target directory
+    /// Count files and directories
     Count(CountArgs),
 }
 
@@ -99,28 +95,6 @@ struct TableCommand {
 enum TableSubCommand {
     /// Get table schema
     Schema(TableSchemaArgs),
-}
-
-#[derive(Debug, Parser)]
-pub struct CpArgs {
-    /// Source directory or file
-    #[arg(required = true)]
-    source: String,
-
-    /// Target directory or file
-    #[arg(required = true)]
-    target: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct MvArgs {
-    /// Source directory or file
-    #[arg(required = true)]
-    source: String,
-
-    /// Target directory or file
-    #[arg(required = true)]
-    target: String,
 }
 
 #[derive(Debug, Parser)]
@@ -139,36 +113,48 @@ pub struct ImageSummaryArgs {
 
 #[derive(Debug, Parser)]
 pub struct ImageResizeArgs {
-    /// Target file
+    /// Input file or directory
     #[arg(required = true)]
-    target: String,
+    input: String,
 
+    /// Requested height
     #[arg(required = true)]
     height: u32,
 
+    /// Requested width
     #[arg(required = true)]
     width: u32,
 
-    /// Output file
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
+
+    /// Flag to enable overwriting of input file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    overwrite: bool,
 }
 
 #[derive(Debug, Parser)]
 pub struct ImageTessellateArgs {
-    /// Target file
+    /// Input file or directory
     #[arg(required = true)]
-    target: String,
+    input: String,
 
+    /// Number of vertical patches
     #[arg(required = true)]
     n_vertical: u32,
 
+    /// Number of horizontal patches
     #[arg(required = true)]
     n_horizontal: u32,
 
-    /// Output file
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    delete_original: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -176,10 +162,6 @@ pub struct AudioSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]
     target: String,
-
-    /// Flag for printing info on single file
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    verbose: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -211,13 +193,13 @@ pub struct AudioResampleArgs {
     #[arg(required = true)]
     sr: u32,
 
-    /// Output directory
+    /// Output file or directory
     #[arg(required = true)]
     output: String,
 
-    /// Replace original file
+    /// Flag to enable overwriting of input file
     #[arg(long, action = clap::ArgAction::SetTrue)]
-    replace_original: bool,
+    overwrite: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -254,9 +236,18 @@ pub struct VideoSummaryArgs {
 
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
-    /// Target file
+    /// Input file (CSV or parquet)
     #[arg(required = true)]
-    target: String,
+    input: String,
+}
+
+// Handle errors in commands gracefully
+fn handle_error(e: anyhow::Error) {
+    eprintln!("Error!");
+    for (i, cause) in e.chain().enumerate() {
+        eprintln!("  Cause {}: {}", i, cause);
+    }
+    std::process::exit(1);
 }
 
 
@@ -265,7 +256,7 @@ fn main() {
     let app = App::parse();
 
     // Run appropriate sub-command
-    match app.command {
+    let result = match app.command {
         Command::Audio(audio_command) => match audio_command.command {
             AudioSubCommand::Summary(args) => commands::audio::summary::execute(args),
             AudioSubCommand::Split(args) => commands::audio::split::execute(args),
@@ -281,12 +272,15 @@ fn main() {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),
         },
         Command::File(file_command) => match file_command.command {
-            FileSubCommand::Cp(args) => commands::file::cp::execute(args),
-            FileSubCommand::Mv(args) => commands::file::mv::execute(args),
             FileSubCommand::Count(args) => commands::file::count::execute(args),
         },
         Command::Table(table_command) => match table_command.command {
             TableSubCommand::Schema(args) => commands::table::schema::execute(args),
         },
+    };
+
+    // Handle error gracefully
+    if let Err(e) = result {
+        handle_error(e);
     }
 }

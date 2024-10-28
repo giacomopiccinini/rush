@@ -1,7 +1,12 @@
 [package]
 name = "rush"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2021"
+repository = "https://github.com/giacomopiccinini/rush"
+rust-version = "1.81"
+authors = ["Giacomo Piccinini <giacomo.piccinini@proton.me>"]
+description = "Swiss-army knife for data inspection and manipulation"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

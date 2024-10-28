@@ -11,7 +11,7 @@ use crate::AudioTrimArgs;
 // Admissible extensions for this command
 const EXTENSIONS : [&str; 1] = ["wav"];
 
-pub fn execute(args: AudioTrimArgs) {
+pub fn execute(args: AudioTrimArgs) -> Result<()> {
 
     // Parse the arguments
     let input = Path::new(&args.input);
@@ -23,17 +23,12 @@ pub fn execute(args: AudioTrimArgs) {
     let overwrite: bool = args.overwrite;
 
     // Sanity checks on I/O
-    if let Err(e) = perform_io_sanity_check(input, output, false) {
-        eprintln!("Error - Can't proceed. Reason: {}", e);
-    }
+    perform_io_sanity_check(input, output, false, true).with_context(|| "Sanity check failed")?;
 
     // Process files
-    if let Err(e) = process(input, offset, length, output, overwrite) {
-        eprintln!("Error - Can't process. Error chain:");
-        for (i, cause) in e.chain().enumerate() {
-            eprintln!("  Cause {}: {}", i, cause);
-        }
-    }
+    process(input, offset, length, output, overwrite).with_context(|| "Processing failed")?;
+
+    Ok(())
 }
 
 
@@ -133,7 +128,8 @@ fn process_file(input: &Path, offset: f32, length: f32, output: &Path, overwrite
 
         // Init writer
         let mut writer = WavWriter::create(output, spec).with_context(|| format!("Couldn't write to {:?}", output))?;
-
+        
+        // Write to file
         trimmed_samples.iter()
             .try_for_each(|&sample| {
                 writer.write_sample(sample)

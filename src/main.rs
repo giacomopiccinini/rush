@@ -259,13 +259,22 @@ pub struct TableSchemaArgs {
     target: String,
 }
 
+// Handle errors in commands gracefully
+fn handle_error(e: anyhow::Error) {
+    eprintln!("Error!");
+    for (i, cause) in e.chain().enumerate() {
+        eprintln!("  Cause {}: {}", i, cause);
+    }
+    std::process::exit(1);
+}
+
 
 fn main() {
     // Init app
     let app = App::parse();
 
     // Run appropriate sub-command
-    match app.command {
+    let result = match app.command {
         Command::Audio(audio_command) => match audio_command.command {
             AudioSubCommand::Summary(args) => commands::audio::summary::execute(args),
             AudioSubCommand::Split(args) => commands::audio::split::execute(args),
@@ -288,5 +297,10 @@ fn main() {
         Command::Table(table_command) => match table_command.command {
             TableSubCommand::Schema(args) => commands::table::schema::execute(args),
         },
+    };
+
+    // Handle error gracefully
+    if let Err(e) = result {
+        handle_error(e);
     }
 }

@@ -10,7 +10,7 @@ pub fn file_has_right_extension(path: &Path, extensions: &[&str]) -> Result<(), 
 }
 
 // Check that I/O make sense
-pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: bool) -> Result<(), io::Error> {
+pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: bool, allow_output_file: bool) -> Result<(), io::Error> {
 
     // Check if input exists (be it a file or a directory)
     if !input.exists() {
@@ -23,6 +23,11 @@ pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: b
     // If we are aiming for a directory and it does not exist, we create it
     if !output_is_file && !output.exists(){
         std::fs::create_dir_all(output)?;
+    }
+
+    // Deny output as a single file
+    if output_is_file && !allow_output_file{
+        return Err(io::Error::new(io::ErrorKind::InvalidInput, "Output being a file is not allowed"));
     }
 
     // Unless explicitly requested, it is not allowed to turn content of a directory into a single file

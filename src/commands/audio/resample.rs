@@ -13,7 +13,7 @@ use crate::AudioResampleArgs;
 // Admissible extensions for this command
 const EXTENSIONS : [&str; 1] = ["wav"];
 
-pub fn execute(args: AudioResampleArgs) {
+pub fn execute(args: AudioResampleArgs) -> Result<()> {
 
     // Parse the arguments
     let input = Path::new(&args.input);
@@ -24,17 +24,12 @@ pub fn execute(args: AudioResampleArgs) {
     let overwrite: bool = args.overwrite;
 
     // Sanity checks on I/O
-    if let Err(e) = perform_io_sanity_check(input, output, false) {
-        eprintln!("Error - Can't proceed. Reason: {}", e);
-    }
+    perform_io_sanity_check(input, output, false, true).with_context(|| "Sanity check failed")?;
 
     // Process files
-    if let Err(e) = process(input, sr, output, overwrite) {
-        eprintln!("Error - Can't process. Error chain:");
-        for (i, cause) in e.chain().enumerate() {
-            eprintln!("  Cause {}: {}", i, cause);
-        }
-    }
+    process(input, sr, output, overwrite).with_context(|| "Processing failed")?;
+
+    Ok(())
 }
 
 // Process all the content (single file or directory of files)

@@ -42,7 +42,7 @@ fn process(input: &Path, chunk_duration_sec: f32, output: &Path, delete_original
         process_file(input, chunk_duration_sec, output)
             .with_context(|| format!("Failed to process file: {:?}", input))?;
         if delete_original {
-            fs::remove_file(&input).with_context(|| format!("Failed to delete file: {:?}", input))?;
+            fs::remove_file(input).with_context(|| format!("Failed to delete file: {:?}", input))?;
         }
     }
 
@@ -73,11 +73,11 @@ fn process(input: &Path, chunk_duration_sec: f32, output: &Path, delete_original
                 .with_context(|| format!("Failed to create output directory: {:?}", output_directory))?;
 
             // Process the file
-            process_file(file, chunk_duration_sec, &output_directory)
+            process_file(file, chunk_duration_sec, output_directory)
                 .with_context(|| format!("Failed to process file: {:?}", file))?;
 
             if delete_original {
-                fs::remove_file(&file).with_context(|| format!("Failed to delete file: {:?}", file))?;
+                fs::remove_file(file).with_context(|| format!("Failed to delete file: {:?}", file))?;
             }
 
             Ok(())

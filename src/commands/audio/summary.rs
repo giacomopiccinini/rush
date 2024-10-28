@@ -1,84 +1,71 @@
 use lofty::{AudioFile, Probe};
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 use rayon::prelude::*;
+use anyhow::{Context, Result};
 
+use crate::utils::{file_has_right_extension};
 use crate::AudioSummaryArgs;
 
-// Check if the file is an audio file
-fn is_audio_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| extensions.contains(&ext.to_lowercase()))
-        .unwrap_or(false)
-}
+// Admissible extensions for this command
+const EXTENSIONS : [&str; 6] = ["mp3", "wav", "ogg", "flac", "aac", "m4a"];
 
-// Process the entire directory, return a list composed of tuples of duration and sample rate
-fn process_directory(target: &PathBuf, extensions: &HashSet<String>) -> (usize, Vec<(u128, u32, u8, u8)>) {
-    let duration_sample_rate: Vec<_> = WalkDir::new(target)
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|entry| !entry.file_type().is_dir())
-        .filter(|entry| is_audio_file(&entry.path().to_path_buf(), extensions))
-        .par_bridge()
-        .filter_map(|entry| process_audio(entry.path()))
+
+pub fn execute(args: AudioSummaryArgs) -> Result<()> {
+
+    // Parse the arguments
+    let target = Path::new(&args.target);
+
+    // Error if it does not exist at all
+    if !target.exists() {
+        return Err(anyhow::Error::msg("Target file or directory does not exist"));
+    }
+
+    // Find all admissible files
+    let files: Vec<PathBuf> = match target.is_file() {
+        true => {
+            if file_has_right_extension(target, &EXTENSIONS).is_ok() {
+                vec![target.to_path_buf()]
+            } else {
+                vec![]
+            }
+        },
+        false => {
+            WalkDir::new(target)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
+            .map(|e| e.path().to_path_buf())
+            .collect()
+        },
+    };
+
+    // Raise error if no files are admissible
+    if files.is_empty(){
+        return Err(anyhow::Error::msg("No admissible audio files detected"));
+    }
+
+    // Process files
+    let info: Vec<(u128, u32, u8, u8)> = files.into_par_iter()
+        .filter_map(|file| process_audio(&file).ok())
         .collect();
 
-    let counter = duration_sample_rate.len();
-    (counter, duration_sample_rate)
-}
-
-// Equivalent of process directory in case of a single audio file
-fn process_single_audio(path: &PathBuf) -> (usize, Vec<(u128, u32, u8, u8)>) {
-    process_audio(path)
-        .map(|info| (1, [info].into_iter().collect()))
-        .unwrap_or((0, Vec::new()))
-}
-
-// Function for getting relevant info (duration and sample rate) of an audio file
-fn process_audio(path: &std::path::Path) -> Option<(u128, u32, u8, u8)>  {
-
-    let audio_file = Probe::open(path)
-    .and_then(|probe| probe.read())
-    .ok()?;
-
-    let properties = audio_file.properties();
-
-    // Get the number of channels
-    let channels = properties.channels()?;
-
-    // Get the duration in seconds
-    let duration = properties.duration().as_nanos();
-
-    // Get the sample rate
-    let sample_rate = properties.sample_rate()?;
-
-    // Get the bit depth
-    let bit_depth = properties.bit_depth()?;
-
-    Some((duration, sample_rate, channels, bit_depth))
-}
-
-// Compute and print the relevant info 
-fn print_audio_summary(n_files: usize, audio_info: Vec<(u128, u32, u8, u8)>) {
+    // Calculate total number of files
+    let n_files = info.len();
 
     // Compute duration in seconds
-    let total_duration_seconds: u64 = audio_info.iter().map(|(duration, _, _, _)| (duration / 1_000_000_000) as u64).sum();
+    let total_duration_seconds: u64 = info.iter()
+        .map(|(duration, _, _, _)| (duration / 1_000_000_000) as u64)
+        .sum();
 
-    // Compute all durations
-    let unique_durations: HashSet<&u128>= audio_info.iter().map(|(duration, _, _, _)| duration).collect();
+    // Get unique values
+    let unique_sample_rates: HashSet<_> = info.iter().map(|(_, sr, _, _)| sr).collect();
+    let unique_channels: HashSet<_> = info.iter().map(|(_, _, channels, _)| channels).collect();
+    let unique_bit_depths: HashSet<_> = info.iter().map(|(_, _, _, depth)| depth).collect();
+    let unique_durations: HashSet<_> = info.iter().map(|(duration, _, _, _)| duration).collect();
 
-    // Find all sample rates
-    let unique_sample_rates: HashSet<&u32> = audio_info.iter().map(|(_, sample_rate, _, _)| sample_rate).collect();
-
-    // Find all channels
-    let unique_channels: HashSet<&u8> = audio_info.iter().map(|(_, _, channels, _)| channels).collect();
-
-    // Find all bit rates
-    let unique_bit_depths: HashSet<&u8> = audio_info.iter().map(|(_, _, _, bit_depth)| bit_depth).collect();
-
-    // Convert duration to hours, minutes and seconds
+    // Format duration
     let hours = total_duration_seconds / 3600;
     let remainder = total_duration_seconds % 3600;
     let minutes = remainder / 60;
@@ -92,27 +79,39 @@ fn print_audio_summary(n_files: usize, audio_info: Vec<(u128, u32, u8, u8)>) {
     println!("Channels: {:?}", unique_channels);
     println!("Bit Depths: {:?}", unique_bit_depths);
     println!("Unique durations: {}", unique_durations.len());
-    println!("Min duration: {:} s", (**unique_durations.iter().min().unwrap() as f64 / 1_000_000_000_f64));
-    println!("Max duration: {:} s", (**unique_durations.iter().max().unwrap() as f64 / 1_000_000_000_f64));
-}
 
-pub fn execute(args: AudioSummaryArgs) {
-
-    let target = PathBuf::from(&args.target);
-    let audio_extensions: HashSet<_> = ["mp3", "wav", "ogg", "flac", "aac", "m4a"]
-        .iter().map(|&s| s.to_lowercase()).collect();
-
-    if !target.is_dir() && !is_audio_file(&target, &audio_extensions) {
-        println!("Target is neither a directory nor an audio file.");
-        return;
+    if let (Some(min), Some(max)) = (unique_durations.iter().min(), unique_durations.iter().max()) {
+        println!("Min duration: {:} s", (**min as f64 / 1_000_000_000_f64));
+        println!("Max duration: {:} s", (**max as f64 / 1_000_000_000_f64));
     }
 
-    let (n_files, audio_info) = if target.is_dir() {
-        process_directory(&target, &audio_extensions)
-    } else {
-        process_single_audio(&target)
-    };
 
-    print_audio_summary(n_files, audio_info);
+    Ok(())
+}
 
+// Function for getting relevant info of an audio file by just probing it
+fn process_audio(file: &Path) -> Result<(u128, u32, u8, u8)>  {
+
+    // Probe the audio file
+    let audio_file = Probe::open(file)
+        .with_context(|| format!("Failed to open audio file: {:?}", file))?
+        .read()
+        .with_context(|| format!("Failed to read audio metadata from: {:?}", file))?;
+
+    // Read all audio file properties
+    let properties = audio_file.properties();
+
+    // Get the number of channels
+    let channels = properties.channels().with_context(|| "Failed to read channels")?;
+
+    // Get the duration in seconds
+    let duration = properties.duration().as_nanos();
+
+    // Get the sample rate
+    let sample_rate = properties.sample_rate().with_context(|| "Failed to read sample rate")?;
+
+    // Get the bit depth
+    let bit_depth = properties.bit_depth().with_context(|| "Failed to read bit depth")?;
+
+    Ok((duration, sample_rate, channels, bit_depth))
 }

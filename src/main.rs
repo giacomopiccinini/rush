@@ -281,22 +281,22 @@ fn main() {
             AudioSubCommand::Resample(args) => commands::audio::resample::execute(args),
             AudioSubCommand::Trim(args) => commands::audio::trim::execute(args),
         },
-        Command::Image(image_command) => match image_command.command {
+        Command::Image(image_command) => Ok(match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
             ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
             ImageSubCommand::Tessellate(args) => commands::image::tessellate::execute(args),
-        },
-        Command::Video(video_command) => match video_command.command {
+        }),
+        Command::Video(video_command) => Ok(match video_command.command {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),
-        },
-        Command::File(file_command) => match file_command.command {
+        }),
+        Command::File(file_command) => Ok(match file_command.command {
             FileSubCommand::Cp(args) => commands::file::cp::execute(args),
             FileSubCommand::Mv(args) => commands::file::mv::execute(args),
             FileSubCommand::Count(args) => commands::file::count::execute(args),
-        },
-        Command::Table(table_command) => match table_command.command {
+        }),
+        Command::Table(table_command) => Ok(match table_command.command {
             TableSubCommand::Schema(args) => commands::table::schema::execute(args),
-        },
+        }),
     };
 
     // Handle error gracefully

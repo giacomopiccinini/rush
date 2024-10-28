@@ -236,9 +236,9 @@ pub struct VideoSummaryArgs {
 
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
-    /// Target file
+    /// Input file (CSV or parquet)
     #[arg(required = true)]
-    target: String,
+    input: String,
 }
 
 // Handle errors in commands gracefully
@@ -274,9 +274,9 @@ fn main() {
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => commands::file::count::execute(args),
         },
-        Command::Table(table_command) => Ok(match table_command.command {
+        Command::Table(table_command) => match table_command.command {
             TableSubCommand::Schema(args) => commands::table::schema::execute(args),
-        }),
+        },
     };
 
     // Handle error gracefully

@@ -1,5 +1,7 @@
 use std::path::Path;
 use std::io;
+use anyhow::{Context, Result};
+use polars::prelude::*;
 
 // Check if file with given path has one of the desired extensions
 pub fn file_has_right_extension(path: &Path, extensions: &[&str]) -> Result<(), io::Error> {
@@ -38,3 +40,19 @@ pub fn perform_io_sanity_check(input: &Path, output: &Path, allow_many_to_one: b
     Ok(())
 }
 
+// Read table
+pub fn read_table(path: &Path) -> Result<LazyFrame> {
+    // Extract extension
+    let extension = path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| ext.to_lowercase())
+        .ok_or_else(|| anyhow::Error::msg("Failed to extract file extension"))?;
+
+    match extension.as_str() {
+        "parquet" => LazyFrame::scan_parquet(path, Default::default())
+            .with_context(|| format!("Failed to read parquet file: {:?}", path)),
+        "csv" => LazyCsvReader::new(path).finish()
+            .with_context(|| format!("Failed to read CSV file: {:?}", path)),
+        _ => Err(anyhow::Error::msg("Unsupported file format")),
+    }
+}

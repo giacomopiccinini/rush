@@ -281,11 +281,11 @@ fn main() {
             AudioSubCommand::Resample(args) => commands::audio::resample::execute(args),
             AudioSubCommand::Trim(args) => commands::audio::trim::execute(args),
         },
-        Command::Image(image_command) => Ok(match image_command.command {
+        Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
-            ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
-            ImageSubCommand::Tessellate(args) => commands::image::tessellate::execute(args),
-        }),
+            ImageSubCommand::Resize(args) => Ok(commands::image::resize::execute(args)),
+            ImageSubCommand::Tessellate(args) => Ok(commands::image::tessellate::execute(args)),
+        },
         Command::Video(video_command) => Ok(match video_command.command {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),
         }),

@@ -1,158 +1,106 @@
 extern crate ffmpeg_next as ffmpeg;
 
+use rayon::prelude::*;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use walkdir::WalkDir;
+use anyhow::{Context, Result};
+
+use crate::utils::{file_has_right_extension};
 
 use crate::VideoSummaryArgs;
 
-pub fn execute(args: VideoSummaryArgs) {
-    // Convert to path object
-    let target = PathBuf::from(&args.target);
+// Admissible extensions for this command
+const EXTENSIONS : [&str; 4] = ["ts", "mp4", "mkv", "mov"];
 
-    // Init FFMPEG
-    ffmpeg::init().unwrap();
+pub fn execute(args: VideoSummaryArgs) -> Result<()>{
 
-    if target.is_dir() {
-        // Init the image counter
-        let mut counter = 0;
+    // Parse the arguments
+    let target = Path::new(&args.target);
 
-        // Init the total length counter
-        let mut total_duration = 0.0;
-
-        // Init the set of unique dimensions
-        let mut dimensions: HashSet<(u32, u32)> = HashSet::new();
-
-        // Init the hash set of unique lengths
-        let mut lengths: HashSet<u64> = HashSet::new();
-
-        // Init the set of fps
-        let mut unique_fps: HashSet<(u32, u32)> = HashSet::new();
-
-        // Iterate over the files in the directory
-        //for path in paths {
-        for path in WalkDir::new(&target).into_iter().filter_map(|e| e.ok()) {
-            // Get the path
-            let path = path.path();
-
-            if path.is_dir() {
-                continue;
-            }
-
-            // If the path has an extension
-            if let Some(ext) = path.extension() {
-                // If the extension is an image extension
-                if ["ts", "mp4", "mkv"].contains(&ext.to_str().unwrap()) {
-                    // Increment the image counter
-                    counter += 1;
-
-                    match ffmpeg::format::input(&path) {
-                        Ok(context) => {
-                            for stream in context.streams() {
-                                // Get the duration
-                                let duration =
-                                    stream.duration() as f64 * f64::from(stream.time_base());
-
-                                // Add the duration to the total duration
-                                total_duration += duration;
-
-                                // Add the duration to the set of unique lengths
-                                lengths.insert(duration as u64);
-
-                                // Get the fps in a rational form
-                                let fps_rational = stream.rate();
-
-                                // Extract the numerator and denominator
-                                let fps_numerator = fps_rational.numerator() as u32;
-                                let fps_denominator = fps_rational.denominator() as u32;
-
-                                // Add the fps to the set of unique fps
-                                unique_fps.insert((fps_numerator, fps_denominator));
-
-                                // Get the codec
-                                let codec = stream.codec();
-
-                                // If the codec is a video codec
-                                if codec.medium() == ffmpeg::media::Type::Video {
-                                    if let Ok(video) = codec.decoder().video() {
-                                        // Get the height and width
-                                        dimensions.insert((video.height(), video.width()));
-                                    }
-                                }
-                            }
-                        }
-                        Err(error) => println!("error: {}", error),
-                    }
-                }
-            }
-        }
-
-        // Get the hours, minutes and seconds from the total duration
-        let hours = total_duration as u64 / 3600;
-        let remainder = total_duration as u64 % 3600;
-        let minutes = remainder / 60;
-        let seconds = remainder % 60;
-
-        // Get info about the lengths
-        let len_count = lengths.len();
-        let is_unique = len_count == 1;
-        let len_min = lengths.iter().min().unwrap();
-        let len_max = lengths.iter().max().unwrap();
-
-        // Print the results
-        println!("Total videos: {}", counter);
-        println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
-        println!("Unique FPS: {:?}", unique_fps);
-        println!("Unique Dimensions: {:?}", dimensions);
-        println!("Equal Length: {}", is_unique);
-        println!("Unique Lengths: {}", len_count);
-        println!("Min Length: {} s", len_min);
-        println!("Max Length: {} s", len_max);
-    } else if ["ts", "mp4", "mkv"].contains(
-        &target
-            .extension()
-            .expect("Error with extension")
-            .to_str()
-            .unwrap(),
-    ) {
-        match ffmpeg::format::input(&target) {
-            Ok(context) => {
-                for stream in context.streams() {
-                    // Get the duration
-                    let duration = stream.duration() as f64 * f64::from(stream.time_base());
-
-                    // Get the hours, minutes and seconds from the total duration
-                    let hours = duration as u64 / 3600;
-                    let remainder = duration as u64 % 3600;
-                    let minutes = remainder / 60;
-                    let seconds = remainder % 60;
-
-                    // Get the fps in a rational form
-                    let fps_rational = stream.rate();
-
-                    // Extract the numerator and denominator
-                    let fps_numerator = fps_rational.numerator() as u32;
-                    let fps_denominator = fps_rational.denominator() as u32;
-
-                    // Get the codec
-                    let codec = stream.codec();
-
-                    println!("Total videos: {}", 1);
-                    println!("Total Duration: {:02}:{:02}:{:02}", hours, minutes, seconds);
-                    println!("FPS: {}/{}", fps_numerator, fps_denominator);
-
-                    // If the codec is a video codec
-                    if codec.medium() == ffmpeg::media::Type::Video {
-                        if let Ok(video) = codec.decoder().video() {
-                            let height = video.height();
-                            let width = video.width();
-
-                            println!("Dimensions: {}x{}", height, width);
-                        }
-                    }
-                }
-            }
-            Err(error) => println!("error: {}", error),
-        }
+    // Error if it does not exist at all
+    if !target.exists() {
+        return Err(anyhow::Error::msg("Target file or directory does not exist"));
     }
+
+    // Find all admissible files
+    let files: Vec<PathBuf> = match target.is_file() {
+        true => {
+            if file_has_right_extension(target, &EXTENSIONS).is_ok() {
+                vec![target.to_path_buf()]
+            } else {
+                vec![]
+            }
+        },
+        false => {
+            WalkDir::new(target)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
+            .map(|e| e.path().to_path_buf())
+            .collect()
+        },
+    };
+
+    // Raise error if no files are admissible
+    if files.is_empty(){
+        return Err(anyhow::Error::msg("No admissible image files detected"));
+    }
+
+    // Process files
+    let info: Vec<(f64, u32, u32, u32, u32)> = files.into_par_iter()
+        .filter_map(|file| process_video(&file).ok())
+        .collect();
+
+    // Calculate total number of files
+    let n_files = info.len();
+
+    // Sum all durations
+    let total_duration: f64 = info.iter().map(|(duration, _, _, _, _)| duration).sum();
+
+    // Get unique values
+    let unique_durations: HashSet<_> = info.iter().map(|(duration, _, _, _, _)| *duration as u64).collect();
+    let unique_fps: HashSet<_> = info.iter().map(|(_, fps_num, fps_den, _, _)| (fps_num, fps_den)).collect();
+    let unique_shapes: HashSet<_> = info.iter().map(|(_, _, _, h, w)| (h, w)).collect();
+
+    // Print results
+    println!("Total files: {}", n_files);
+    println!("Total duration: {}", total_duration);
+    println!("Unique durations: {:?}", unique_durations);
+    println!("Unique (height, width) pairs: {:?}", unique_shapes);
+    println!("Unique  FPS: {:?}", unique_fps);
+
+    Ok(())
+}
+
+
+// Function for getting relevant info of an image file by just probing it
+fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)>  {
+
+    // Read context
+    let context = ffmpeg::format::input(&path).with_context(|| "Couldn't read video")?;
+
+    // Only select the video stream, throw away audio, subtitles etc
+    if let Some(video_stream) = context.streams().find(|s| s.codec().medium() == ffmpeg::media::Type::Video) {
+
+        // Extract duration
+        let duration = video_stream.duration() as f64 * f64::from(video_stream.time_base());
+
+        // Extract FPS
+        let fps_numerator = video_stream.rate().numerator() as u32;
+        let fps_denominator = video_stream.rate().denominator() as u32;
+        
+        // Decode video
+        let video = video_stream.codec().decoder().video().with_context(|| "Couldn't decode video")?;
+
+        // Extract width and height
+        let height = video.height();
+        let width = video.width();
+
+        Ok((duration, fps_numerator, fps_denominator, height, width))
+    }
+    else{
+        Err(anyhow::Error::msg("No video stream found in file"))
+    }
+
 }

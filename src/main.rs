@@ -294,9 +294,9 @@ fn main() {
             ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
             ImageSubCommand::Tessellate(args) => commands::image::tessellate::execute(args),
         },
-        Command::Video(video_command) => Ok(match video_command.command {
+        Command::Video(video_command) => match video_command.command {
             VideoSubCommand::Summary(args) => commands::video::summary::execute(args),
-        }),
+        },
         Command::File(file_command) => Ok(match file_command.command {
             FileSubCommand::Cp(args) => commands::file::cp::execute(args),
             FileSubCommand::Mv(args) => commands::file::mv::execute(args),

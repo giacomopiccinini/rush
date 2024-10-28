@@ -1,105 +1,104 @@
 use image::io::Reader as ImageReader;
-use image::imageops::resize;
-use image::imageops::FilterType;
-use std::path::PathBuf;
-use std::collections::HashSet;
+use image::imageops::{resize, FilterType};
+use std::path::{PathBuf, Path};
 use rayon::prelude::*;
+use anyhow::{Context, Result};
+use walkdir::WalkDir;
+
+use crate::utils::{file_has_right_extension, perform_io_sanity_check};
+
+// Admissible extensions for this command
+const EXTENSIONS : [&str; 6] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"];
 
 use crate::ImageResizeArgs;
 
-
-// Check if the file is an image file
-fn is_image_file(path: &PathBuf, extensions: &HashSet<String>) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| extensions.contains(&ext.to_lowercase()))
-        .unwrap_or(false)
-}
-
-// Resize one image
-fn resize_image(input_path: &PathBuf, output_path: &PathBuf, width: u32, height: u32, filter: FilterType) {
-    let input_img = ImageReader::open(input_path).unwrap().decode().unwrap();
-    let output_img = resize(&input_img, width, height, filter);
-    output_img.save(&output_path).unwrap();
-}
-
-// Resize directory
-fn resize_directory(input_paths: Vec<PathBuf>, output_paths: Vec<PathBuf>, width: u32, height: u32, filter: FilterType) {
-    input_paths.into_par_iter()
-        .zip(output_paths)
-        .for_each(|(input, output)| {
-            resize_image(&input, &output, width, height, filter);
-        });
-}
-
 // Execute the resize command
-pub fn execute(args: ImageResizeArgs) {
+pub fn execute(args: ImageResizeArgs) -> Result<()> {
 
-    // Convert to path
-    let target = PathBuf::from(&args.target);
-    let output = PathBuf::from(&args.output);
+    // Parse the arguments
+    let input = Path::new(&args.input);
+    let output = Path::new(&args.output);
 
-    // Sanity check
-    if target.is_dir() && output.is_file(){
-        println!("ERROR: Output cannot be a file if input is a directory.");
-        return;
-    }
-    
-    // Check if target and output are the same
-    if target == output {
-        println!("Warning: The target and output paths are the same. This will overwrite the original files.");
-        println!("Do you want to continue? (y/n)");
-        
-        let mut user_input = String::new();
-        std::io::stdin().read_line(&mut user_input).expect("Failed to read line");
-        
-        if user_input.trim().to_lowercase() != "y" {
-            println!("Operation cancelled.");
-            return;
-        }
-    }
+    let height: u32 = args.height;
+    let width: u32 = args.width;
 
-    // Define allowed extensions for images
-    let image_extensions: HashSet<_> = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"]
-    .iter().map(|&s| s.to_lowercase()).collect();
+    let overwrite: bool = args.overwrite;
 
-    // Collect input files based on type of target
-    let input_files = if target.is_file() {
-        // If it's a file, check if it has the right extension
-        if is_image_file(&target, &image_extensions) {
-            vec![target.clone()]
-        } else {
-            println!("The provided file is not a supported image format.");
-            return;
-        }
-    } else if target.is_dir() {
-        // If it's a directory, collect all files with the right extensions
-        std::fs::read_dir(&target)
-            .expect("Failed to read directory")
-            .filter_map(Result::ok)
-            .map(|entry| entry.path())
-            .filter(|path| path.is_file() && is_image_file(path, &image_extensions))
-            .collect()
-    } else {
-        println!("The provided path is neither a file nor a directory.");
-        return;
-    };
+    // Sanity checks on I/O
+    perform_io_sanity_check(input, output, false, true).with_context(|| "Sanity check failed")?;
 
-    // Check if we found any valid image files
-    if input_files.is_empty() {
-        println!("No valid image files found.");
-        return;
+    // Process files
+    process(input, height, width, output, overwrite).with_context(|| "Processing failed")?;
+
+    Ok(())
+
+}
+
+// Process all the content (single file or directory of files)
+fn process(input: &Path, height: u32, width: u32, output: &Path, overwrite: bool) -> Result<()> {
+
+    // Case of single input file
+    if input.is_file() {
+        // Check if the file has the right extension and process it
+        file_has_right_extension(input, &EXTENSIONS)?;
+        process_file(input, height, width, output, overwrite)
+            .with_context(|| format!("Failed to process file: {:?}", input))?;
     }
 
-    // Define the output files
-    let output_files = if output.is_dir(){
-        input_files.iter().map(|input_path| output.join(input_path.file_name().unwrap())).collect()
-    } else {
-        vec![output]
-    };
+    // Case of input being a directory
+    else {
 
-    // Resize directory
-    resize_directory(input_files, output_files, args.width, args.height, FilterType::Lanczos3);
+        // Find all files
+        let files: Vec<PathBuf> = WalkDir::new(input)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
+        .map(|e| e.path().to_path_buf())
+        .collect();
 
+        // Parallel loop over entries
+        files.par_iter().try_for_each(|file| -> Result<()> {
+
+            // Relative path wrt input directory
+            let relative_path = file.strip_prefix(input)
+                .with_context(|| format!("Failed to strip prefix from path: {:?}", file))?;
+
+            // Nested output path
+            let file_output = output.join(relative_path);
+
+            // Ensure the output directory exists
+            if let Some(parent) = file_output.parent() {
+                std::fs::create_dir_all(parent)
+                    .with_context(|| format!("Failed to create output directory: {:?}", parent))?;
+            }
+
+            // Process the file
+            process_file(file, height, width, &file_output, overwrite)
+                .with_context(|| format!("Failed to process file: {:?}", file))?;
+
+            Ok(())
+        })?;
+    } 
+    Ok(())
+}
+
+// Process a single file
+fn process_file(input: &Path, height: u32, width: u32, output: &Path, overwrite: bool) -> Result<()>{
+
+    // Check that we can overwrite
+    if input == output && !overwrite {
+        return Err(anyhow::Error::msg("Can't overwrite files"))
+    }
+
+    // Read image
+    let input_img = ImageReader::open(input).with_context(|| "Can't open image")?.decode().with_context(|| "Can't decode image")?;
+
+    // Resize image
+    let output_img = resize(&input_img, width, height, FilterType::Lanczos3);
+
+    // Save image
+    output_img.save(&output).with_context(|| format!("Couldn't save image to {:?}", output))?;
+
+    Ok(())
 }
 

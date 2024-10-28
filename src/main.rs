@@ -139,9 +139,9 @@ pub struct ImageSummaryArgs {
 
 #[derive(Debug, Parser)]
 pub struct ImageResizeArgs {
-    /// Target file
+    /// Input file
     #[arg(required = true)]
-    target: String,
+    input: String,
 
     #[arg(required = true)]
     height: u32,
@@ -152,6 +152,10 @@ pub struct ImageResizeArgs {
     /// Output file
     #[arg(required = true)]
     output: String,
+    
+    /// Flag to enable overwriting of input file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    overwrite: bool,
 }
 
 #[derive(Debug, Parser)]
@@ -283,7 +287,7 @@ fn main() {
         },
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => commands::image::summary::execute(args),
-            ImageSubCommand::Resize(args) => Ok(commands::image::resize::execute(args)),
+            ImageSubCommand::Resize(args) => commands::image::resize::execute(args),
             ImageSubCommand::Tessellate(args) => Ok(commands::image::tessellate::execute(args)),
         },
         Command::Video(video_command) => Ok(match video_command.command {

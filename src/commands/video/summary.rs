@@ -1,26 +1,27 @@
 extern crate ffmpeg_next as ffmpeg;
 
+use anyhow::{Context, Result};
 use rayon::prelude::*;
 use std::collections::HashSet;
-use std::path::{PathBuf, Path};
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use anyhow::{Context, Result};
 
-use crate::utils::{file_has_right_extension};
+use crate::utils::file_has_right_extension;
 
 use crate::VideoSummaryArgs;
 
 // Admissible extensions for this command
-const EXTENSIONS : [&str; 4] = ["ts", "mp4", "mkv", "mov"];
+const EXTENSIONS: [&str; 4] = ["ts", "mp4", "mkv", "mov"];
 
-pub fn execute(args: VideoSummaryArgs) -> Result<()>{
-
+pub fn execute(args: VideoSummaryArgs) -> Result<()> {
     // Parse the arguments
     let target = Path::new(&args.target);
 
     // Error if it does not exist at all
     if !target.exists() {
-        return Err(anyhow::Error::msg("Target file or directory does not exist"));
+        return Err(anyhow::Error::msg(
+            "Target file or directory does not exist",
+        ));
     }
 
     // Find all admissible files
@@ -31,24 +32,23 @@ pub fn execute(args: VideoSummaryArgs) -> Result<()>{
             } else {
                 vec![]
             }
-        },
-        false => {
-            WalkDir::new(target)
+        }
+        false => WalkDir::new(target)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| file_has_right_extension(e.path(), &EXTENSIONS).is_ok())
             .map(|e| e.path().to_path_buf())
-            .collect()
-        },
+            .collect(),
     };
 
     // Raise error if no files are admissible
-    if files.is_empty(){
+    if files.is_empty() {
         return Err(anyhow::Error::msg("No admissible image files detected"));
     }
 
     // Process files
-    let info: Vec<(f64, u32, u32, u32, u32)> = files.into_par_iter()
+    let info: Vec<(f64, u32, u32, u32, u32)> = files
+        .into_par_iter()
         .filter_map(|file| process_video(&file).ok())
         .collect();
 
@@ -59,8 +59,14 @@ pub fn execute(args: VideoSummaryArgs) -> Result<()>{
     let total_duration: f64 = info.iter().map(|(duration, _, _, _, _)| duration).sum();
 
     // Get unique values
-    let unique_durations: HashSet<_> = info.iter().map(|(duration, _, _, _, _)| *duration as u64).collect();
-    let unique_fps: HashSet<_> = info.iter().map(|(_, fps_num, fps_den, _, _)| (fps_num, fps_den)).collect();
+    let unique_durations: HashSet<_> = info
+        .iter()
+        .map(|(duration, _, _, _, _)| *duration as u64)
+        .collect();
+    let unique_fps: HashSet<_> = info
+        .iter()
+        .map(|(_, fps_num, fps_den, _, _)| (fps_num, fps_den))
+        .collect();
     let unique_shapes: HashSet<_> = info.iter().map(|(_, _, _, h, w)| (h, w)).collect();
 
     // Print results
@@ -73,34 +79,36 @@ pub fn execute(args: VideoSummaryArgs) -> Result<()>{
     Ok(())
 }
 
-
 // Function for getting relevant info of an image file by just probing it
-fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)>  {
-
+fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)> {
     // Read context
     let context = ffmpeg::format::input(&path).with_context(|| "Couldn't read video")?;
 
     // Only select the video stream, throw away audio, subtitles etc
-    if let Some(video_stream) = context.streams().find(|s| s.codec().medium() == ffmpeg::media::Type::Video) {
-
+    if let Some(video_stream) = context
+        .streams()
+        .find(|s| s.codec().medium() == ffmpeg::media::Type::Video)
+    {
         // Extract duration
         let duration = video_stream.duration() as f64 * f64::from(video_stream.time_base());
 
         // Extract FPS
         let fps_numerator = video_stream.rate().numerator() as u32;
         let fps_denominator = video_stream.rate().denominator() as u32;
-        
+
         // Decode video
-        let video = video_stream.codec().decoder().video().with_context(|| "Couldn't decode video")?;
+        let video = video_stream
+            .codec()
+            .decoder()
+            .video()
+            .with_context(|| "Couldn't decode video")?;
 
         // Extract width and height
         let height = video.height();
         let width = video.width();
 
         Ok((duration, fps_numerator, fps_denominator, height, width))
-    }
-    else{
+    } else {
         Err(anyhow::Error::msg("No video stream found in file"))
     }
-
 }

@@ -1,8 +1,8 @@
 #![deny(unused_crate_dependencies)]
-use clap::{Parser, Subcommand, Args};
+use clap::{Args, Parser, Subcommand};
 
-pub mod utils;
 mod commands;
+pub mod utils;
 
 /// Rust implementation of bash commands
 #[derive(Debug, Parser)]
@@ -225,14 +225,12 @@ pub struct AudioTrimArgs {
     overwrite: bool,
 }
 
-
 #[derive(Debug, Parser)]
 pub struct VideoSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]
     target: String,
 }
-
 
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
@@ -249,7 +247,6 @@ fn handle_error(e: anyhow::Error) {
     }
     std::process::exit(1);
 }
-
 
 fn main() {
     // Init app

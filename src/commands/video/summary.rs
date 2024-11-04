@@ -97,8 +97,13 @@ fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)> {
         let fps_denominator = video_stream.rate().denominator() as u32;
 
         // Create decoder
-        let context_decoder = ffmpeg::codec::context::Context::from_parameters(video_stream.parameters()).with_context(|| "Failed to create decoder context from video stream parameters")?;
-        let decoder = context_decoder.decoder().video().with_context(|| "Failed to create video decoder from decoder context")?;
+        let context_decoder =
+            ffmpeg::codec::context::Context::from_parameters(video_stream.parameters())
+                .with_context(|| "Failed to create decoder context from video stream parameters")?;
+        let decoder = context_decoder
+            .decoder()
+            .video()
+            .with_context(|| "Failed to create video decoder from decoder context")?;
 
         // Extract width and height from codec parameters directly
         let width = decoder.width();

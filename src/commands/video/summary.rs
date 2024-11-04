@@ -87,7 +87,7 @@ fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)> {
     // Only select the video stream, throw away audio, subtitles etc
     if let Some(video_stream) = context
         .streams()
-        .find(|s| s.codec().medium() == ffmpeg::media::Type::Video)
+        .find(|s| s.parameters().medium() == ffmpeg::media::Type::Video)
     {
         // Extract duration
         let duration = video_stream.duration() as f64 * f64::from(video_stream.time_base());
@@ -96,16 +96,13 @@ fn process_video(path: &Path) -> Result<(f64, u32, u32, u32, u32)> {
         let fps_numerator = video_stream.rate().numerator() as u32;
         let fps_denominator = video_stream.rate().denominator() as u32;
 
-        // Decode video
-        let video = video_stream
-            .codec()
-            .decoder()
-            .video()
-            .with_context(|| "Couldn't decode video")?;
+        // Create decoder
+        let context_decoder = ffmpeg::codec::context::Context::from_parameters(video_stream.parameters()).with_context(|| "Failed to create decoder context from video stream parameters")?;
+        let decoder = context_decoder.decoder().video().with_context(|| "Failed to create video decoder from decoder context")?;
 
-        // Extract width and height
-        let height = video.height();
-        let width = video.width();
+        // Extract width and height from codec parameters directly
+        let width = decoder.width();
+        let height = decoder.height();
 
         Ok((duration, fps_numerator, fps_denominator, height, width))
     } else {

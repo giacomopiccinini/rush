@@ -8,8 +8,6 @@ authors = ["Giacomo Piccinini <giacomo.piccinini@proton.me>"]
 description = "Swiss-army knife for data inspection and manipulation"
 license = "MIT"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "1.0.91"
 clap = { version = "4.4.7", features = ["derive"] }

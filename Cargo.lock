@@ -2024,6 +2024,7 @@ dependencies = [
  "polars",
  "rayon",
  "rubato",
+ "uuid",
  "walkdir",
 ]
 

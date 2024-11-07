@@ -80,7 +80,7 @@ fn test_audio_split_directory_success() -> Result<()> {
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
         .collect();
-    let files2: Vec<_> = fs::read_dir(&output_dir.join("nested"))?
+    let files2: Vec<_> = fs::read_dir(output_dir.join("nested"))?
         .filter_map(|entry| entry.ok())
         .collect();
 
@@ -172,7 +172,7 @@ fn test_audio_split_directory_with_delete_success() -> Result<()> {
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.path().is_file())
         .collect();
-    let files2: Vec<_> = fs::read_dir(&output_dir.join("nested"))?
+    let files2: Vec<_> = fs::read_dir(output_dir.join("nested"))?
         .filter_map(|entry| entry.ok())
         .collect();
 

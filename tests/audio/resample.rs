@@ -1,9 +1,9 @@
-use rush::commands::audio;
 use crate::utils::{cleanup_test_dir, create_test_wav, setup_test_dir};
-use rush::AudioResampleArgs;
 use anyhow::Result;
-use std::fs;
 use hound::WavReader;
+use rush::commands::audio;
+use rush::AudioResampleArgs;
+use std::fs;
 
 #[test]
 fn test_audio_resample_file_success() -> Result<()> {
@@ -68,10 +68,10 @@ fn test_audio_resample_directory_success() -> Result<()> {
     // Verify output files exist and have correct sample rate
     let output_path1 = output_dir.join("test1.wav");
     let output_path2 = output_dir.join("nested/test2.wav");
-    
+
     assert!(output_path1.exists());
     assert!(output_path2.exists());
-    
+
     let reader1 = WavReader::open(output_path1)?;
     let reader2 = WavReader::open(output_path2)?;
     assert_eq!(reader1.spec().sample_rate, 22050);
@@ -204,7 +204,6 @@ fn test_audio_resample_very_high_rate_success() -> Result<()> {
 
     Ok(())
 }
-
 
 #[test]
 fn test_audio_resample_higher_rate() -> Result<()> {

@@ -9,7 +9,7 @@ pub fn setup_test_dir() -> Result<PathBuf> {
     // Create a unique directory name by concatenating strings
     let dir_name = format!("test-data-{}", Uuid::new_v4());
     let test_dir = PathBuf::from(dir_name);
-    
+
     if test_dir.exists() {
         fs::remove_dir_all(&test_dir)?;
     }

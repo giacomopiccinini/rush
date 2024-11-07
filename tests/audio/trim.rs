@@ -1,7 +1,7 @@
-use rush::commands::audio;
 use crate::utils::{cleanup_test_dir, create_test_wav, setup_test_dir};
-use rush::AudioTrimArgs;
 use anyhow::Result;
+use rush::commands::audio;
+use rush::AudioTrimArgs;
 use std::fs;
 
 #[test]

@@ -1,11 +1,10 @@
-use rush::commands::audio;
 use crate::utils::{cleanup_test_dir, create_test_wav, setup_test_dir};
-use rush::AudioSummaryArgs;
 use anyhow::Result;
+use rush::commands::audio;
+use rush::AudioSummaryArgs;
 
 #[test]
 fn test_audio_summary_directory_success() -> Result<()> {
-
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
 
@@ -29,7 +28,6 @@ fn test_audio_summary_directory_success() -> Result<()> {
 
 #[test]
 fn test_audio_summary_file_success() -> Result<()> {
-
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
 
@@ -53,7 +51,6 @@ fn test_audio_summary_file_success() -> Result<()> {
 
 #[test]
 fn test_audio_summary_empty_directory_error() -> Result<()> {
-
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
 
@@ -61,10 +58,10 @@ fn test_audio_summary_empty_directory_error() -> Result<()> {
     let args = AudioSummaryArgs {
         target: test_dir.to_string_lossy().to_string(),
     };
-    
+
     // Execute and expect an error
     let result = audio::summary::execute(args);
-    
+
     // Assert that it's an error and optionally check the error message
     assert!(result.is_err());
 
@@ -76,7 +73,6 @@ fn test_audio_summary_empty_directory_error() -> Result<()> {
 
 #[test]
 fn test_audio_summary_non_existing_directory_error() -> Result<()> {
-
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
     // Clean up dir
@@ -86,10 +82,10 @@ fn test_audio_summary_non_existing_directory_error() -> Result<()> {
     let args = AudioSummaryArgs {
         target: test_dir.to_string_lossy().to_string(),
     };
-    
+
     // Execute and expect an error
     let result = audio::summary::execute(args);
-    
+
     // Assert that it's an error and optionally check the error message
     assert!(result.is_err());
 

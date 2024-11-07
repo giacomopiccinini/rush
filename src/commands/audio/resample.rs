@@ -149,12 +149,64 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
     let mut writer = WavWriter::create(output, resampled_spec)
         .with_context(|| format!("Couldn't write to {:?}", output))?;
 
-    // Write to file
-    resampled_32.iter().try_for_each(|&sample| {
-        writer
-            .write_sample(sample)
-            .with_context(|| "Failed to write audio sample")
-    })?;
+    // Write to file based on bits_per_sample
+    match spec.bits_per_sample {
+        8 => {
+            // For 8-bit samples, scale and convert to u8
+            for i in 0..resampled_64[0].len() {
+                for channel in &resampled_64 {
+                    //let sample = ((channel[i] + 1.0) * 0.5 * i8::MAX as f64).round() as i8;
+                    let sample = (channel[i] * i8::MAX as f64).round() as i8;
+                    writer
+                        .write_sample(sample)
+                        .with_context(|| "Failed to write audio sample")?;
+                }
+            }
+        }
+        16 => {
+            // For 16-bit samples, scale and convert to i16
+            for i in 0..resampled_64[0].len() {
+                for channel in &resampled_64 {
+                    let sample = (channel[i] * i16::MAX as f64).round() as i16;
+                    writer
+                        .write_sample(sample)
+                        .with_context(|| "Failed to write audio sample")?;
+                }
+            }
+        }
+        24 => {
+            // For 24-bit samples, scale and convert to i32 (lower 24 bits used)
+            for i in 0..resampled_64[0].len() {
+                for channel in &resampled_64 {
+                    let sample = (channel[i] * 8_388_607.0).round() as i32; // 2^23 - 1
+                    writer
+                        .write_sample(sample)
+                        .with_context(|| "Failed to write audio sample")?;
+                }
+            }
+        }
+        32 => {
+            // For 32-bit samples, scale and convert to i32
+            for i in 0..resampled_64[0].len() {
+                for channel in &resampled_64 {
+                    let sample = (channel[i] * i32::MAX as f64).round() as i32;
+                    writer
+                        .write_sample(sample)
+                        .with_context(|| "Failed to write audio sample")?;
+                }
+            }
+        }
+        _ => {
+            return Err(anyhow::Error::msg("Unsupported bits per sample"));
+        }
+    }
+
+    // // Write to file
+    // resampled_32.iter().try_for_each(|&sample| {
+    //     writer
+    //         .write_sample(sample)
+    //         .with_context(|| "Failed to write audio sample")
+    // })?;
 
     Ok(())
 }

@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
 use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use rayon::prelude::*;
-use rubato::{FftFixedInOut, Resampler};
-use std::fs::copy;
+use rubato::{FftFixedIn, Resampler};
+use std::fs::{copy, File};
 use std::path::Path;
 use std::path::PathBuf;
+use std::io::BufReader;
 use walkdir::WalkDir;
 
 use crate::utils::{file_has_right_extension, perform_io_sanity_check};
@@ -31,7 +32,7 @@ pub fn execute(args: AudioResampleArgs) -> Result<()> {
     Ok(())
 }
 
-// Process all the content (single file or directory of files)
+/// Process all the content (single file or directory of files)
 fn process(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()> {
     // Case of single input file
     if input.is_file() {
@@ -76,7 +77,31 @@ fn process(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()> 
     Ok(())
 }
 
-// Process a single file
+/// Read samples and convert to f64
+fn read_samples(reader: &mut WavReader<BufReader<File>>, channels: usize, bits_per_sample: u16) -> Result<Vec<Vec<f64>>> {
+
+    // Init samples vec
+    let mut samples: Vec<Vec<f64>> = vec![Vec::new(); channels];
+    
+    // Calculate the maximum value based on bits_per_sample
+    let max_value = 2_f64.powi(bits_per_sample as i32 - 1);
+
+    // Read into samples vec
+    reader
+        .samples::<i32>()
+        .map(|s| s.with_context(|| format!("Couldn't read samples")))
+        .collect::<Result<Vec<_>, _>>()?
+        .iter()
+        .enumerate()
+        .for_each(|(i, &sample)| {
+            // Normalize by dividing by max_value
+            samples[i % channels].push(sample as f64 / max_value);
+        });
+
+    Ok(samples)
+}
+
+/// Process a single file
 fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()> {
     // Check that we can overwrite
     if input == output && !overwrite {
@@ -101,23 +126,15 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
         return Ok(());
     }
 
-    // Read samples, convert to f64, and deinterleave into channels in one pass
-    let mut samples: Vec<Vec<f64>> = vec![Vec::new(); channels];
-    reader
-        .samples::<i32>()
-        .map(|s| s.with_context(|| format!("Couldn't read samples from {:?}", input)))
-        .collect::<Result<Vec<_>, _>>()?
-        .iter()
-        .enumerate()
-        .for_each(|(i, &sample)| {
-            samples[i % channels].push(sample as f64 / i32::MAX as f64);
-        });
+    // Read samples
+    let samples = read_samples(&mut reader, channels, spec.bits_per_sample).with_context(|| "Couldn't read file")?;
 
     // Initialize the resampler
-    let mut resampler = FftFixedInOut::<f64>::new(
+    let mut resampler = FftFixedIn::<f64>::new(
         original_sr as usize,
         sr as usize,
         samples[0].len(), // Number of frames per channel
+        1024,
         channels,
     )
     .with_context(|| "Can't initiate resampler")?;
@@ -126,16 +143,6 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
     let resampled_64 = resampler
         .process(&samples, None)
         .with_context(|| "Can't resample file")?;
-
-    // Create a vector to store the interleaved i32 samples with pre-allocated capacity
-    let mut resampled_32 = Vec::with_capacity(resampled_64[0].len() * channels);
-    // Iterate through each frame
-    resampled_32.extend((0..resampled_64[0].len()).flat_map(|i| {
-        resampled_64
-            .iter()
-            .take(channels)
-            .map(move |channel| (channel[i] * i32::MAX as f64) as i32)
-    }));
 
     // Create a new WAV specification for the resampled audio
     let resampled_spec = WavSpec {
@@ -149,64 +156,27 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
     let mut writer = WavWriter::create(output, resampled_spec)
         .with_context(|| format!("Couldn't write to {:?}", output))?;
 
-    // Write to file based on bits_per_sample
-    match spec.bits_per_sample {
-        8 => {
-            // For 8-bit samples, scale and convert to u8
-            for i in 0..resampled_64[0].len() {
-                for channel in &resampled_64 {
-                    //let sample = ((channel[i] + 1.0) * 0.5 * i8::MAX as f64).round() as i8;
-                    let sample = (channel[i] * i8::MAX as f64).round() as i8;
-                    writer
-                        .write_sample(sample)
-                        .with_context(|| "Failed to write audio sample")?;
-                }
+    // Calculate the max value based on bits_per_sample for proper scaling
+    let max_value = 2_f64.powi((spec.bits_per_sample - 1) as i32);
+
+    // Write samples interleaved
+    for i in 0..resampled_64[0].len() {
+        for channel in &resampled_64 {
+            // Scale back to the appropriate integer range
+            let scaled_sample = (channel[i] * max_value).round();
+            
+            // Write sample based on bits_per_sample
+            match spec.bits_per_sample {
+                8 => writer.write_sample(scaled_sample as i8)?,
+                16 => writer.write_sample(scaled_sample as i16)?,
+                24 | 32 => writer.write_sample(scaled_sample as i32)?,
+                _ => return Err(anyhow::Error::msg(format!(
+                    "Unsupported bits per sample: {}", 
+                    spec.bits_per_sample
+                ))),
             }
-        }
-        16 => {
-            // For 16-bit samples, scale and convert to i16
-            for i in 0..resampled_64[0].len() {
-                for channel in &resampled_64 {
-                    let sample = (channel[i] * i16::MAX as f64).round() as i16;
-                    writer
-                        .write_sample(sample)
-                        .with_context(|| "Failed to write audio sample")?;
-                }
-            }
-        }
-        24 => {
-            // For 24-bit samples, scale and convert to i32 (lower 24 bits used)
-            for i in 0..resampled_64[0].len() {
-                for channel in &resampled_64 {
-                    let sample = (channel[i] * 8_388_607.0).round() as i32; // 2^23 - 1
-                    writer
-                        .write_sample(sample)
-                        .with_context(|| "Failed to write audio sample")?;
-                }
-            }
-        }
-        32 => {
-            // For 32-bit samples, scale and convert to i32
-            for i in 0..resampled_64[0].len() {
-                for channel in &resampled_64 {
-                    let sample = (channel[i] * i32::MAX as f64).round() as i32;
-                    writer
-                        .write_sample(sample)
-                        .with_context(|| "Failed to write audio sample")?;
-                }
-            }
-        }
-        _ => {
-            return Err(anyhow::Error::msg("Unsupported bits per sample"));
         }
     }
-
-    // // Write to file
-    // resampled_32.iter().try_for_each(|&sample| {
-    //     writer
-    //         .write_sample(sample)
-    //         .with_context(|| "Failed to write audio sample")
-    // })?;
 
     Ok(())
 }

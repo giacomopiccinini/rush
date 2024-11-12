@@ -12,7 +12,7 @@ fn test_table_schema_file_success() -> Result<()> {
     // Create test files
     let csv_path = test_dir.join("test.csv");
     let parquet_path = test_dir.join("test.parquet");
-    
+
     create_test_table(&csv_path)?;
     create_test_table(&parquet_path)?;
 
@@ -22,7 +22,7 @@ fn test_table_schema_file_success() -> Result<()> {
     };
     table::schema::execute(csv_args)?;
 
-    // Test Parquet file 
+    // Test Parquet file
     let parquet_args = TableSchemaArgs {
         input: parquet_path.to_string_lossy().to_string(),
     };

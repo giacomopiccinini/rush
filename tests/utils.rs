@@ -1,11 +1,11 @@
 use anyhow::Result;
+use polars::df;
+use polars::prelude::*;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
-use polars::prelude::*;
-use polars::df;
 
 /// Creates a fresh test directory for running tests
 pub fn setup_test_dir() -> Result<PathBuf> {
@@ -151,8 +151,7 @@ pub fn create_test_video(
 }
 
 /// Create table
-pub fn create_test_table(path: &Path)-> Result<()> {
-
+pub fn create_test_table(path: &Path) -> Result<()> {
     // Use macro
     let mut df = df! [
         "names" => ["a", "b", "c"],
@@ -160,9 +159,7 @@ pub fn create_test_table(path: &Path)-> Result<()> {
     ]?;
 
     // Find extension
-    let ext = path.extension()  
-        .and_then(|e| e.to_str()) 
-        .unwrap_or(""); 
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
 
     // Create a file
     let mut file = File::create(path)?;
@@ -173,12 +170,11 @@ pub fn create_test_table(path: &Path)-> Result<()> {
                 .include_header(true)
                 .with_separator(b',')
                 .finish(&mut df)?;
-        },
+        }
         "parquet" => {
-            ParquetWriter::new(file)
-                .finish(&mut df)?;
-        },
-        _ => return Err(anyhow::anyhow!("Unsupported file extension: {}", ext))
+            ParquetWriter::new(file).finish(&mut df)?;
+        }
+        _ => return Err(anyhow::anyhow!("Unsupported file extension: {}", ext)),
     }
 
     Ok(())

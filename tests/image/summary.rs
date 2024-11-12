@@ -82,7 +82,7 @@ fn test_image_summary_nonexistent_path() -> Result<()> {
 fn test_image_summary_invalid_extension() -> Result<()> {
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
-    
+
     // Create a file with invalid extension
     let invalid_path = test_dir.join("test.txt");
     fs::write(&invalid_path, "test content")?;

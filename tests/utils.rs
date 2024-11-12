@@ -115,13 +115,20 @@ pub fn create_test_video(
     let output = Command::new("ffmpeg")
         .args([
             "-y", // Overwrite output file if it exists
-            "-loop", "1", // Loop the input
-            "-i", temp_image.to_str().unwrap(),
-            "-c:v", "libx264",
-            "-t", &duration_sec.to_string(),
-            "-pix_fmt", "yuv420p",
-            "-r", &fps.to_string(),
-            "-vf", &format!("scale={}:{}", width, height),
+            "-loop",
+            "1", // Loop the input
+            "-i",
+            temp_image.to_str().unwrap(),
+            "-c:v",
+            "libx264",
+            "-t",
+            &duration_sec.to_string(),
+            "-pix_fmt",
+            "yuv420p",
+            "-r",
+            &fps.to_string(),
+            "-vf",
+            &format!("scale={}:{}", width, height),
             path.to_str().unwrap(),
         ])
         .output()?;

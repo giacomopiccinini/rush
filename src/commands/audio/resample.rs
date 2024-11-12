@@ -3,9 +3,9 @@ use hound::{SampleFormat, WavReader, WavSpec, WavWriter};
 use rayon::prelude::*;
 use rubato::{FftFixedIn, Resampler};
 use std::fs::{copy, File};
+use std::io::BufReader;
 use std::path::Path;
 use std::path::PathBuf;
-use std::io::BufReader;
 use walkdir::WalkDir;
 
 use crate::utils::{file_has_right_extension, perform_io_sanity_check};
@@ -78,18 +78,21 @@ fn process(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result<()> 
 }
 
 /// Read samples and convert to f64
-fn read_samples(reader: &mut WavReader<BufReader<File>>, channels: usize, bits_per_sample: u16) -> Result<Vec<Vec<f64>>> {
-
+fn read_samples(
+    reader: &mut WavReader<BufReader<File>>,
+    channels: usize,
+    bits_per_sample: u16,
+) -> Result<Vec<Vec<f64>>> {
     // Init samples vec
     let mut samples: Vec<Vec<f64>> = vec![Vec::new(); channels];
-    
+
     // Calculate the maximum value based on bits_per_sample
     let max_value = 2_f64.powi(bits_per_sample as i32 - 1);
 
     // Read into samples vec
     reader
         .samples::<i32>()
-        .map(|s| s.with_context(|| format!("Couldn't read samples")))
+        .map(|s| s.with_context(|| "Couldn't read samples".to_string()))
         .collect::<Result<Vec<_>, _>>()?
         .iter()
         .enumerate()
@@ -127,7 +130,8 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
     }
 
     // Read samples
-    let samples = read_samples(&mut reader, channels, spec.bits_per_sample).with_context(|| "Couldn't read file")?;
+    let samples = read_samples(&mut reader, channels, spec.bits_per_sample)
+        .with_context(|| "Couldn't read file")?;
 
     // Initialize the resampler
     let mut resampler = FftFixedIn::<f64>::new(
@@ -164,16 +168,18 @@ fn process_file(input: &Path, sr: u32, output: &Path, overwrite: bool) -> Result
         for channel in &resampled_64 {
             // Scale back to the appropriate integer range
             let scaled_sample = (channel[i] * max_value).round();
-            
+
             // Write sample based on bits_per_sample
             match spec.bits_per_sample {
                 8 => writer.write_sample(scaled_sample as i8)?,
                 16 => writer.write_sample(scaled_sample as i16)?,
                 24 | 32 => writer.write_sample(scaled_sample as i32)?,
-                _ => return Err(anyhow::Error::msg(format!(
-                    "Unsupported bits per sample: {}", 
-                    spec.bits_per_sample
-                ))),
+                _ => {
+                    return Err(anyhow::Error::msg(format!(
+                        "Unsupported bits per sample: {}",
+                        spec.bits_per_sample
+                    )))
+                }
             }
         }
     }

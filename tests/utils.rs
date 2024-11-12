@@ -25,13 +25,14 @@ pub fn cleanup_test_dir(test_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn create_test_wav(path: &Path, duration_sec: f32, sample_rate: u32) -> Result<()> {
+/// Create sample wav file
+pub fn create_test_wav(path: &Path, duration_sec: f32, sample_rate: u32, channels: usize, bits_per_sample: u16) -> Result<()> {
     use hound::{WavSpec, WavWriter};
 
     let spec = WavSpec {
-        channels: 1,
+        channels: channels as u16,
         sample_rate,
-        bits_per_sample: 16,
+        bits_per_sample,
         sample_format: hound::SampleFormat::Int,
     };
 
@@ -40,7 +41,16 @@ pub fn create_test_wav(path: &Path, duration_sec: f32, sample_rate: u32) -> Resu
 
     for t in 0..num_samples {
         let sample = (t as f32 * 440.0 * 2.0 * std::f32::consts::PI / sample_rate as f32).sin();
-        writer.write_sample((sample * i16::MAX as f32) as i16)?;
+        
+        // Write sample for each channel
+        for _ in 0..channels {
+            match bits_per_sample {
+                8 => writer.write_sample((sample * i8::MAX as f32) as i8)?,
+                16 => writer.write_sample((sample * i16::MAX as f32) as i16)?,
+                32 => writer.write_sample((sample * i32::MAX as f32) as i32)?,
+                _ => return Err(anyhow::anyhow!("Unsupported bits per sample: {}", bits_per_sample)),
+            }
+        }
     }
     Ok(())
 }

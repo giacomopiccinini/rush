@@ -10,7 +10,7 @@ fn test_audio_summary_directory_success() -> Result<()> {
 
     // Create test files
     let wav_path = test_dir.join("test.wav");
-    create_test_wav(&wav_path, 10.0, 44100)?;
+    create_test_wav(&wav_path, 10.0, 44100, 2, 16)?;
 
     // Define args
     let args = AudioSummaryArgs {
@@ -33,7 +33,7 @@ fn test_audio_summary_file_success() -> Result<()> {
 
     // Create test files
     let wav_path = test_dir.join("test.wav");
-    create_test_wav(&wav_path, 10.0, 44100)?;
+    create_test_wav(&wav_path, 10.0, 44100, 2, 16)?;
 
     // Define args
     let args = AudioSummaryArgs {
@@ -108,12 +108,16 @@ fn test_audio_summary_nested_directories_success() -> Result<()> {
     let wav_path2 = subdir1.join("test2.wav");
     let wav_path3 = subdir2.join("test3.wav");
     let wav_path4 = subdir3.join("test4.wav");
+    let wav_path5 = subdir3.join("test5.wav");
+    let wav_path6 = subdir3.join("test6.wav");
 
     // Create test WAV files with different durations
-    create_test_wav(&wav_path1, 10.0, 44100)?;
-    create_test_wav(&wav_path2, 15.0, 44100)?;
-    create_test_wav(&wav_path3, 20.0, 44100)?;
-    create_test_wav(&wav_path4, 25.0, 44100)?;
+    create_test_wav(&wav_path1, 15.0, 44100, 1, 8)?;
+    create_test_wav(&wav_path2, 20.0, 44100, 2, 8)?;
+    create_test_wav(&wav_path3, 10.0, 44100, 1, 16)?;
+    create_test_wav(&wav_path4, 10.0, 44100, 2, 16)?;
+    create_test_wav(&wav_path5, 25.0, 44100, 1, 32)?;
+    create_test_wav(&wav_path6, 25.0, 44100, 2, 32)?;
 
     // Define args to scan the root directory
     let args = AudioSummaryArgs {

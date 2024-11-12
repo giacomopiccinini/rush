@@ -12,7 +12,7 @@ fn test_audio_trim_file_success() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 10.0, 44100)?;
+    create_test_wav(&input_path, 10.0, 44100, 2, 16)?;
 
     // Define args
     let args = AudioTrimArgs {
@@ -49,8 +49,8 @@ fn test_audio_trim_directory_success() -> Result<()> {
     fs::create_dir(&nested_dir)?;
     let wav_path2 = nested_dir.join("test2.wav");
 
-    create_test_wav(&wav_path1, 10.0, 44100)?;
-    create_test_wav(&wav_path2, 10.0, 44100)?;
+    create_test_wav(&wav_path1, 10.0, 44100, 1, 8)?;
+    create_test_wav(&wav_path2, 10.0, 44100, 2, 16)?;
 
     // Define args
     let args = AudioTrimArgs {
@@ -82,7 +82,7 @@ fn test_audio_trim_invalid_offset_error() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Define args with offset larger than file duration
     let args = AudioTrimArgs {
@@ -111,7 +111,7 @@ fn test_audio_trim_invalid_length_error() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Define args with offset + length larger than file duration
     let args = AudioTrimArgs {
@@ -139,7 +139,7 @@ fn test_audio_trim_overwrite_protection_error() -> Result<()> {
 
     // Create test file
     let input_path = test_dir.join("input.wav");
-    create_test_wav(&input_path, 10.0, 44100)?;
+    create_test_wav(&input_path, 10.0, 44100, 2, 16)?;
 
     // Try to overwrite input file without overwrite flag
     let args = AudioTrimArgs {
@@ -167,7 +167,7 @@ fn test_audio_trim_overwrite_success() -> Result<()> {
 
     // Create test file
     let input_path = test_dir.join("input.wav");
-    create_test_wav(&input_path, 10.0, 44100)?;
+    create_test_wav(&input_path, 10.0, 44100, 2, 16)?;
 
     // Try to overwrite input file with overwrite flag
     let args = AudioTrimArgs {

@@ -13,7 +13,7 @@ fn test_audio_resample_file_success() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Define args with new sample rate
     let args = AudioResampleArgs {
@@ -51,8 +51,8 @@ fn test_audio_resample_directory_success() -> Result<()> {
     fs::create_dir(&nested_dir)?;
     let wav_path2 = nested_dir.join("test2.wav");
 
-    create_test_wav(&wav_path1, 5.0, 44100)?;
-    create_test_wav(&wav_path2, 5.0, 44100)?;
+    create_test_wav(&wav_path1, 5.0, 44100, 2, 16)?;
+    create_test_wav(&wav_path2, 5.0, 44100, 2, 16)?;
 
     // Define args
     let args = AudioResampleArgs {
@@ -91,7 +91,7 @@ fn test_audio_resample_same_rate_success() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Define args with same sample rate
     let args = AudioResampleArgs {
@@ -122,7 +122,7 @@ fn test_audio_resample_overwrite_protection_error() -> Result<()> {
 
     // Create test file
     let input_path = test_dir.join("input.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Try to overwrite input file without overwrite flag
     let args = AudioResampleArgs {
@@ -149,7 +149,7 @@ fn test_audio_resample_overwrite_success() -> Result<()> {
 
     // Create test file
     let input_path = test_dir.join("input.wav");
-    create_test_wav(&input_path, 5.0, 44100)?;
+    create_test_wav(&input_path, 5.0, 44100, 2, 16)?;
 
     // Try to overwrite input file with overwrite flag
     let args = AudioResampleArgs {
@@ -181,7 +181,7 @@ fn test_audio_resample_very_high_rate_success() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 384_000)?;
+    create_test_wav(&input_path, 5.0, 384_000, 2, 16)?;
 
     // Define args with higher sample rate
     let args = AudioResampleArgs {
@@ -213,7 +213,7 @@ fn test_audio_resample_higher_rate() -> Result<()> {
     // Create test files
     let input_path = test_dir.join("input.wav");
     let output_path = test_dir.join("output.wav");
-    create_test_wav(&input_path, 5.0, 22050)?;
+    create_test_wav(&input_path, 5.0, 22050, 2, 16)?;
 
     // Define args with higher sample rate
     let args = AudioResampleArgs {
@@ -230,6 +230,74 @@ fn test_audio_resample_higher_rate() -> Result<()> {
     assert!(output_path.exists());
     let reader = WavReader::open(output_path)?;
     assert_eq!(reader.spec().sample_rate, 44100);
+
+    // Clean up dir
+    cleanup_test_dir(&test_dir)?;
+
+    Ok(())
+}
+
+#[test]
+fn test_audio_resample_mono_8bit() -> Result<()> {
+    // Set up the directory for testing
+    let test_dir = setup_test_dir()?;
+
+    // Create test files
+    let input_path = test_dir.join("input.wav");
+    let output_path = test_dir.join("output.wav");
+    create_test_wav(&input_path, 5.0, 44100, 1, 8)?;
+
+    // Define args with new sample rate
+    let args = AudioResampleArgs {
+        input: input_path.to_string_lossy().to_string(),
+        output: output_path.to_string_lossy().to_string(),
+        sr: 22050,
+        overwrite: false,
+    };
+
+    // Execute command
+    audio::resample::execute(args)?;
+
+    // Verify output file exists and has correct sample rate
+    assert!(output_path.exists());
+    let reader = WavReader::open(output_path)?;
+    assert_eq!(reader.spec().sample_rate, 22050);
+    assert_eq!(reader.spec().channels, 1);
+    assert_eq!(reader.spec().bits_per_sample, 8);
+
+    // Clean up dir
+    cleanup_test_dir(&test_dir)?;
+
+    Ok(())
+}
+
+#[test]
+fn test_audio_resample_stereo_32bit() -> Result<()> {
+    // Set up the directory for testing
+    let test_dir = setup_test_dir()?;
+
+    // Create test files
+    let input_path = test_dir.join("input.wav");
+    let output_path = test_dir.join("output.wav");
+    create_test_wav(&input_path, 5.0, 44100, 2, 32)?;
+
+    // Define args with new sample rate
+    let args = AudioResampleArgs {
+        input: input_path.to_string_lossy().to_string(),
+        output: output_path.to_string_lossy().to_string(),
+        sr: 22050,
+        overwrite: false,
+    };
+
+    // Execute command
+    audio::resample::execute(args)?;
+
+    // Verify output file exists and has correct sample rate
+    assert!(output_path.exists());
+    let reader = WavReader::open(output_path)?;
+    assert_eq!(reader.spec().sample_rate, 22050);
+    assert_eq!(reader.spec().channels, 2);
+    assert_eq!(reader.spec().bits_per_sample, 32);
 
     // Clean up dir
     cleanup_test_dir(&test_dir)?;

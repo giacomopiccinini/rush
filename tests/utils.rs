@@ -1,8 +1,11 @@
 use anyhow::Result;
 use std::fs;
+use std::fs::File;
 use std::path::Path;
 use std::path::PathBuf;
 use uuid::Uuid;
+use polars::prelude::*;
+use polars::df;
 
 /// Creates a fresh test directory for running tests
 pub fn setup_test_dir() -> Result<PathBuf> {
@@ -143,6 +146,40 @@ pub fn create_test_video(
 
     // Clean up temporary image
     std::fs::remove_file(temp_image)?;
+
+    Ok(())
+}
+
+/// Create table
+pub fn create_test_table(path: &Path)-> Result<()> {
+
+    // Use macro
+    let mut df = df! [
+        "names" => ["a", "b", "c"],
+        "values" => [1, 2, 3],
+    ]?;
+
+    // Find extension
+    let ext = path.extension()  
+        .and_then(|e| e.to_str()) 
+        .unwrap_or(""); 
+
+    // Create a file
+    let mut file = File::create(path)?;
+
+    match ext {
+        "csv" => {
+            CsvWriter::new(&mut file)
+                .include_header(true)
+                .with_separator(b',')
+                .finish(&mut df)?;
+        },
+        "parquet" => {
+            ParquetWriter::new(file)
+                .finish(&mut df)?;
+        },
+        _ => return Err(anyhow::anyhow!("Unsupported file extension: {}", ext))
+    }
 
     Ok(())
 }

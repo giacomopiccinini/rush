@@ -65,3 +65,34 @@ pub fn create_test_wav(
     }
     Ok(())
 }
+
+/// Create a test image with specified dimensions and channels
+pub fn create_test_image(path: &Path, width: u32, height: u32, channels: u8) -> Result<()> {
+    use image::{ImageBuffer, Luma, Rgb};
+
+    if channels != 1 && channels != 3 {
+        return Err(anyhow::anyhow!("Number of channels must be 1 or 3"));
+    }
+
+    if channels == 1 {
+        // Create a grayscale image
+        let img: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::from_fn(width, height, |x, y| {
+            // Create a simple pattern
+            let value = ((x as f32 / width as f32 + y as f32 / height as f32) * 255.0) as u8;
+            Luma([value])
+        });
+        img.save(path)?;
+    } else {
+        // Create an RGB image
+        let img: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::from_fn(width, height, |x, y| {
+            // Create a simple RGB pattern
+            let r = (x as f32 / width as f32 * 255.0) as u8;
+            let g = (y as f32 / height as f32 * 255.0) as u8;
+            let b = ((x as f32 + y as f32) / (width as f32 + height as f32) * 255.0) as u8;
+            Rgb([r, g, b])
+        });
+        img.save(path)?;
+    }
+
+    Ok(())
+}

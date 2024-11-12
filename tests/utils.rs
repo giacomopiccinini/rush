@@ -96,3 +96,46 @@ pub fn create_test_image(path: &Path, width: u32, height: u32, channels: u8) -> 
 
     Ok(())
 }
+
+/// Create a test video file with specified dimensions, duration and framerate
+pub fn create_test_video(
+    path: &Path,
+    width: u32,
+    height: u32,
+    duration_sec: f32,
+    fps: u32,
+) -> Result<()> {
+    use std::process::Command;
+
+    // First create a test image that will be used for the video
+    let temp_image = path.with_extension("png");
+    create_test_image(&temp_image, width, height, 3)?;
+
+    // Use ffmpeg to create video from the image
+    let output = Command::new("ffmpeg")
+        .args([
+            "-y", // Overwrite output file if it exists
+            "-loop", "1", // Loop the input
+            "-i", temp_image.to_str().unwrap(),
+            "-c:v", "libx264",
+            "-t", &duration_sec.to_string(),
+            "-pix_fmt", "yuv420p",
+            "-r", &fps.to_string(),
+            "-vf", &format!("scale={}:{}", width, height),
+            path.to_str().unwrap(),
+        ])
+        .output()?;
+
+    // Check if ffmpeg command was successful
+    if !output.status.success() {
+        return Err(anyhow::anyhow!(
+            "FFmpeg failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    // Clean up temporary image
+    std::fs::remove_file(temp_image)?;
+
+    Ok(())
+}

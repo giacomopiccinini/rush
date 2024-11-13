@@ -20,7 +20,15 @@ A Swiss-army knife CLI tool for data inspection and manipulation, written in Rus
 ```bash
 cargo install rush
 ```
+If the standard cargo installation fails, please consider using the provided Docker file. To build that run
 
+```bash
+docker build --tag rush .
+```
+Notice, however, that since rush is meant to interact with directories and files on your computer, these are not available straight away to a Docker container running rush. Hence, make sure to mount them before running a command, for instance
+```bash
+docker run -v "$(pwd)/test-directory:/app/test-directory" rush <COMMAND> /app/test-directory
+```
 ## Command Categories
 
 ### Audio Commands

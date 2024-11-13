@@ -17,5 +17,5 @@ COPY Cargo.lock .
 # Build the application
 RUN cargo build --release
 
-# # Run the application
-# ENTRYPOINT ["./target/release/rush"]
+# Run the application
+ENTRYPOINT ["./target/release/rush"]

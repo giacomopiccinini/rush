@@ -14,13 +14,25 @@ A Swiss-army knife CLI tool for data inspection and manipulation, written in Rus
 
 ## Overview
 
-`rush` is a command-line utility that provides various tools for working with multimedia files, data tables, and file system operations. It's designed to be fast and efficient, leveraging parallel processing where possible.
+`rush` is a command-line utility that provides various tools for working with multimedia files and data tables. It's designed to be fast and efficient, leveraging parallel processing where possible. 
+
+Specifically, it is capable of handling images, videos, audios, tabular files and (to some extent) "generic" files and directories. Restrictions might apply on admissible file formats, for instance only *.wav* audio files can be resampled. 
+
+The syntax is consistent across modalities and follows the pattern
+```bash
+rush <MEDIA> <COMMAND> <OPTIONS>
+```
+as in `rush image summary mypic.png`. 
 
 ## Installation
 ```bash
-cargo install rush
+cargo install --path .
 ```
-If the standard cargo installation fails, please consider using the provided Docker file. To build that run
+Be aware that some extra dependecies are needed, mostly related to FFMpeg. On Debian-like systems, ensure you run first
+```bash
+sudo apt update && apt install -y ffmpeg libavformat-dev libavutil-dev libavcodec-dev libavfilter-dev libavdevice-dev libclang-dev
+```
+If the standard cargo installation fails, please consider using the provided Dockerfile. To build that run
 
 ```bash
 docker build --tag rush .

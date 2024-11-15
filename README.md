@@ -2,7 +2,7 @@
 
 A Swiss-army knife CLI tool for data inspection and manipulation, written in Rust.
 
-![](https://github.com/giacomopiccinini/rush/assets/rush.gif)
+![](https://github.com/giacomopiccinini/rush/blob/main/assets/rush.gif)
 
 ## Table of Contents
 - [Overview](#overview)

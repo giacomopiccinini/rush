@@ -4,6 +4,8 @@ A Swiss-army knife CLI tool for data inspection and manipulation, written in Rus
 
 ## Table of Contents
 - [Overview](#overview)
+  - [Why rush?](#why-rush?)
+  - [Typical Workflow](#typical-workflow)
 - [Installation](#installation)
 - [Command Categories](#command-categories)
   - [Audio Commands](#audio-commands)
@@ -274,7 +276,3 @@ name: Age, field: Int64
 name: Department, field: String
 name: Salary, field: Int64
 ```
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details.

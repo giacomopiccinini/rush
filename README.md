@@ -37,7 +37,7 @@ rush image summary photos/
 # Total files: 156
 # Unique (height, width) pairs: {(1080, 1920), (800, 600), (3024, 4032)}
 ```
-Let's then reshape all of them to a common height width
+Let's then reshape all of them to a common height-width and store them elsewhere
 ```bash
 rush image resize photos/ 1080 1920 reshaped-photos/
 ```

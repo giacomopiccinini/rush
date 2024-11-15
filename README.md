@@ -14,15 +14,40 @@ A Swiss-army knife CLI tool for data inspection and manipulation, written in Rus
 
 ## Overview
 
-`rush` is a command-line utility that provides various tools for working with multimedia files and data tables. It's designed to be fast and efficient, leveraging parallel processing where possible. 
+`rush` is a command-line utility that provides various tools for working with multimedia files and data tables. It's designed to be fast and efficient, leveraging parallel processing where possible. It is capable of handling images, videos, audios, tabular files and (to some extent) "generic" files and directories. Restrictions might apply on admissible file formats.
 
-Specifically, it is capable of handling images, videos, audios, tabular files and (to some extent) "generic" files and directories. Restrictions might apply on admissible file formats, for instance only *.wav* audio files can be resampled. 
+### Why rush?
 
-The syntax is consistent across modalities and follows the pattern
+As a Machine Learning/Data Engineer, I frequently work with diverse datasets comprising audio files, images, and videos for model training. Common questions that arise include *"What is the total number of images in the dataset?"*, *"What is the combined duration of all videos?"*, and *"Are the audio files consistent in their sample rates?"*.
+
+Rush aims to:
+1. Provide comprehensive summaries of file contents and their properties
+2. Enable common file manipulations to ensure dataset consistency
+
+### Typical Workflow
+
+Rush exposes a consistent syntax across modalities following the pattern
 ```bash
 rush <MEDIA> <COMMAND> <OPTIONS>
 ```
-as in `rush image summary mypic.png`. 
+To summarise the imagery in a directory (with all subdirectories included) run
+```bash
+rush image summary photos/
+
+# Total files: 156
+# Unique (height, width) pairs: {(1080, 1920), (800, 600), (3024, 4032)}
+```
+Let's then reshape all of them to a common height width
+```bash
+rush image resize photos/ 1080 1920 reshaped-photos/
+```
+and let's check again the summary
+```bash
+rush image summary reshaped-photos/
+
+# Total files: 156
+# Unique (height, width) pairs: {(1080, 1920)}
+```
 
 ## Installation
 ```bash

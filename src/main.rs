@@ -2,7 +2,7 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, CountArgs, ImageResizeArgs,
     ImageSummaryArgs, ImageTessellateArgs, ImageToLandscapeArgs, ImageToPortraitArgs,
-    TableSchemaArgs, VideoSummaryArgs,
+    TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoSummaryArgs,
 };
 
 /// Rust implementation of bash commands
@@ -82,6 +82,8 @@ struct TableCommand {
 #[derive(Debug, Subcommand)]
 enum TableSubCommand {
     Schema(TableSchemaArgs),
+    ToParquet(TableToParquetArgs),
+    ToCsv(TableToCsvArgs),
 }
 
 fn main() {
@@ -111,6 +113,8 @@ fn main() {
         },
         Command::Table(table_command) => match table_command.command {
             TableSubCommand::Schema(args) => rush::commands::table::schema::execute(args),
+            TableSubCommand::ToParquet(args) => rush::commands::table::to_parquet::execute(args),
+            TableSubCommand::ToCsv(args) => rush::commands::table::to_csv::execute(args),
         },
     };
 

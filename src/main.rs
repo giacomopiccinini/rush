@@ -1,7 +1,8 @@
 use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, CountArgs, ImageResizeArgs,
-    ImageSummaryArgs, ImageTessellateArgs, TableSchemaArgs, VideoSummaryArgs,
+    ImageSummaryArgs, ImageTessellateArgs, ImageToLandscapeArgs, ImageToPortraitArgs,
+    TableSchemaArgs, VideoSummaryArgs,
 };
 
 /// Rust implementation of bash commands
@@ -46,6 +47,8 @@ enum ImageSubCommand {
     Summary(ImageSummaryArgs),
     Resize(ImageResizeArgs),
     Tessellate(ImageTessellateArgs),
+    ToLandscape(ImageToLandscapeArgs),
+    ToPortrait(ImageToPortraitArgs),
 }
 
 #[derive(Debug, Args)]
@@ -95,6 +98,10 @@ fn main() {
             ImageSubCommand::Summary(args) => rush::commands::image::summary::execute(args),
             ImageSubCommand::Resize(args) => rush::commands::image::resize::execute(args),
             ImageSubCommand::Tessellate(args) => rush::commands::image::tessellate::execute(args),
+            ImageSubCommand::ToLandscape(args) => {
+                rush::commands::image::to_landscape::execute(args)
+            }
+            ImageSubCommand::ToPortrait(args) => rush::commands::image::to_portrait::execute(args),
         },
         Command::Video(video_command) => match video_command.command {
             VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),

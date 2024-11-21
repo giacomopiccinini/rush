@@ -64,6 +64,36 @@ pub struct ImageTessellateArgs {
 }
 
 #[derive(Debug, Parser)]
+pub struct ImageToLandscapeArgs {
+    /// Input file or directory
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Output file or directory
+    #[arg(required = true)]
+    pub output: String,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub overwrite: bool,
+}
+
+#[derive(Debug, Parser)]
+pub struct ImageToPortraitArgs {
+    /// Input file or directory
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Output file or directory
+    #[arg(required = true)]
+    pub output: String,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub overwrite: bool,
+}
+
+#[derive(Debug, Parser)]
 pub struct AudioSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]

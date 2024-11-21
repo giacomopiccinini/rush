@@ -175,6 +175,28 @@ pub struct TableSchemaArgs {
     pub input: String,
 }
 
+#[derive(Debug, Args)]
+pub struct TableToParquetArgs {
+    /// Input CSV file or directory
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Output directory or file
+    #[arg(required = true)]
+    pub output: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TableToCsvArgs {
+    /// Input parquet file
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Output directory or file
+    #[arg(required = true)]
+    pub output: String,
+}
+
 // Error handling utility that can be used by both lib and binary
 pub fn handle_error(e: anyhow::Error) {
     eprintln!("Error!");

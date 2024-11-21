@@ -1,3 +1,3 @@
 mod schema;
-mod to_parquet;
 mod to_csv;
+mod to_parquet;

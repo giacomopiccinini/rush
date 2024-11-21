@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
+use polars::prelude::*;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use polars::prelude::*;
 
 use crate::utils::{file_has_right_extension, perform_io_sanity_check};
 
@@ -32,7 +32,7 @@ fn process(input: &Path, output: &Path) -> Result<()> {
     if input.is_file() {
         // Check if the file has the right extension and process it
         file_has_right_extension(input, &EXTENSIONS)?;
-        process_file(input,output)
+        process_file(input, output)
             .with_context(|| format!("Failed to process file: {:?}", input))?;
     }
     // Case of input being a directory
@@ -72,11 +72,7 @@ fn process(input: &Path, output: &Path) -> Result<()> {
 }
 
 // Process a single file
-fn process_file(
-    input: &Path,
-    output: &Path,
-) -> Result<()> {
-
+fn process_file(input: &Path, output: &Path) -> Result<()> {
     // Read df from CSV file
     let mut df = CsvReadOptions::default()
         .with_has_header(true)
@@ -86,10 +82,13 @@ fn process_file(
         .with_context(|| format!("Failed to finish CSV reading: {:?}", input))?;
 
     // Open output file
-    let mut output_file = std::fs::File::create(output).with_context(|| format!("Failed to open parquet file: {:?}", output))?;
+    let mut output_file = std::fs::File::create(output)
+        .with_context(|| format!("Failed to open parquet file: {:?}", output))?;
 
     // Write file to parquet
-    ParquetWriter::new(&mut output_file).finish(&mut df).with_context(|| format!("Failed to write parquet file: {:?}", output))?;
+    ParquetWriter::new(&mut output_file)
+        .finish(&mut df)
+        .with_context(|| format!("Failed to write parquet file: {:?}", output))?;
 
     Ok(())
 }

@@ -19,6 +19,8 @@ polars = { version = "0.43.1", features = ["csv", "lazy", "parquet"] }
 rayon = "1.10.0"
 rubato = "0.16.0"
 walkdir = "2.4.0"
+hashbrown = "0.15.1"
 
 [dev-dependencies]
 uuid = { version = "1.0", features = ["v4"] }
+

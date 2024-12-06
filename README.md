@@ -30,10 +30,8 @@ Rush aims to:
 
 ### Typical Workflow
 
-Rush exposes a consistent syntax across modalities following the pattern
-```bash
-rush <MEDIA> <COMMAND> <OPTIONS>
-```
+Rush exposes a consistent syntax across modalities following the pattern```bash
+rush <MEDIA> <COMMAND> <OPTIONS>```
 To summarise the imagery in a directory (with all subdirectories included) run
 ```bash
 rush image summary photos/
@@ -278,3 +276,4 @@ name: Age, field: Int64
 name: Department, field: String
 name: Salary, field: Int64
 ```
+

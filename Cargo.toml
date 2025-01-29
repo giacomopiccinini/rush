@@ -20,6 +20,9 @@ rayon = "1.10.0"
 rubato = "0.16.0"
 walkdir = "2.4.0"
 hashbrown = "0.15.1"
+gstreamer-video = "0.23.4"
+gstreamer = "0.23.4"
+gstreamer-app = "0.23.4"
 
 [dev-dependencies]
 uuid = { version = "1.0", features = ["v4"] }

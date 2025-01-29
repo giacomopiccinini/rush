@@ -55,9 +55,9 @@ rush image summary reshaped-photos/
 ```bash
 cargo install --path .
 ```
-Be aware that some extra dependecies are needed, mostly related to FFMpeg. On Debian-like systems, ensure you run first
+Be aware that some extra dependecies are needed, mostly related to FFMpeg and GStreamer. On Debian-like systems, ensure you run first
 ```bash
-sudo apt update && apt install -y ffmpeg libavformat-dev libavutil-dev libavcodec-dev libavfilter-dev libavdevice-dev libclang-dev
+sudo apt update && apt install -y ffmpeg libavformat-dev libavutil-dev libavcodec-dev libavfilter-dev libavdevice-dev libclang-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 ```
 If the standard cargo installation fails, please consider using the provided Dockerfile. To build that run
 
@@ -226,6 +226,21 @@ Total duration: 3600.5
 Unique durations: {120, 240, 360}
 Unique (height, width) pairs: {(1080, 1920), (720, 1280)}
 Unique FPS: {(30, 1), (60, 1)}
+```
+
+#### `video to frames`
+Extract frames from a video
+
+**Supported Extensions**: `.ts`, `.mp4`, `.mkv`, `.mov`  
+**Input**: Needs to be a single file
+
+```bash
+rush video to-frames <input> <output>
+```
+
+Example:
+```bash
+rush video to-frames video.mp4 frames/
 ```
 
 ### File Commands

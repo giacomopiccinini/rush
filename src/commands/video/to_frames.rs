@@ -17,8 +17,7 @@ pub fn execute(args: VideoToFramesArgs) -> Result<()> {
     let output = Path::new(&args.output);
 
     // Perform sanity check on I/O
-    perform_io_sanity_check(input, output, false, false)
-        .with_context(|| "Sanity check failed")?;
+    perform_io_sanity_check(input, output, false, false).with_context(|| "Sanity check failed")?;
 
     // Check extension
     file_has_right_extension(input, &EXTENSIONS)

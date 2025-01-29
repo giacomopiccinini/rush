@@ -17,7 +17,7 @@ pub fn execute(args: VideoToFramesArgs) -> Result<()> {
     let output = Path::new(&args.output);
 
     // Perform sanity check on I/O
-    perform_io_sanity_check(&input, &output, false, false)
+    perform_io_sanity_check(input, output, false, false)
         .with_context(|| "Sanity check failed")?;
 
     // Check extension
@@ -45,7 +45,7 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
 
     // GStreamer must be initialized.
     // This command initializes all internal structures and loads available plugins.
-    gst::init().with_context(|| format!("Failed to init GStreamer"))?;
+    gst::init().with_context(|| "Failed to init GStreamer".to_string())?;
 
     // A pipeline is a top-level container that manages the data flow and
     // synchronization of its contained elements
@@ -53,29 +53,29 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
 
     // filesrc: Reads data from a file
     let filesrc = gst::ElementFactory::make_with_name("filesrc", Some("file-source"))
-        .with_context(|| format!("Failed to create filesrc element"))?;
-    filesrc.set_property("location", &input.to_str());
+        .with_context(|| "Failed to create filesrc element".to_string())?;
+    filesrc.set_property("location", input.to_str());
 
     // decodebin: Auto-detects the type of encoded stream and decodes it
     let decodebin = gst::ElementFactory::make_with_name("decodebin", Some("decodebin"))
-        .with_context(|| format!("Failed to create decodebin element"))?;
+        .with_context(|| "Failed to create decodebin element".to_string())?;
     // videoconvert: Converts video frames between different formats
     let videoconvert = gst::ElementFactory::make_with_name("videoconvert", Some("videoconvert"))
-        .with_context(|| format!("Failed to create videoconvert"))?;
+        .with_context(|| "Failed to create videoconvert".to_string())?;
     // pngenc: Encodes raw video frames into PNG format
     let pngenc = gst::ElementFactory::make_with_name("pngenc", Some("pngenc"))
-        .with_context(|| format!("Failed to create pngenc"))?;
+        .with_context(|| "Failed to create pngenc".to_string())?;
     // multifilesink: Saves buffers to a series of sequentially-named files
     let multifilesink = gst::ElementFactory::make_with_name("multifilesink", Some("multifilesink"))
-        .with_context(|| format!("Failed to create multifilesink"))?;
-    multifilesink.set_property("location", &output.join("frame%d.png").to_str());
+        .with_context(|| "Failed to create multifilesink".to_string())?;
+    multifilesink.set_property("location", output.join("frame%d.png").to_str());
 
     // Add all elements to the pipeline
     // Elements must be added to the pipeline before they can be used
     // This is the replica of the CLI pipeline we defined above
     pipeline
-        .add_many(&[&filesrc, &decodebin, &videoconvert, &pngenc, &multifilesink])
-        .with_context(|| format!("Failed adding elements to GStreamer pipeline"))?;
+        .add_many([&filesrc, &decodebin, &videoconvert, &pngenc, &multifilesink])
+        .with_context(|| "Failed adding elements to GStreamer pipeline".to_string())?;
 
     // Link what we can statically:
     // Elements are linked in the order that data should flow through them.
@@ -83,12 +83,12 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // so we can only link what we know about at this point.
 
     // Link filesrc → decodebin
-    gst::Element::link_many(&[&filesrc, &decodebin])
-        .with_context(|| format!("Failed to link filesrc and decodebin"))?;
+    gst::Element::link_many([&filesrc, &decodebin])
+        .with_context(|| "Failed to link filesrc and decodebin".to_string())?;
 
     // Link videoconvert → pngenc → multifilesink
-    gst::Element::link_many(&[&videoconvert, &pngenc, &multifilesink])
-        .with_context(|| format!("Failed to link videoconvert, pngenc and multifilesink"))?;
+    gst::Element::link_many([&videoconvert, &pngenc, &multifilesink])
+        .with_context(|| "Failed to link videoconvert, pngenc and multifilesink".to_string())?;
 
     // Connect decodebin's "pad-added" signal
     // Since decodebin creates its output pads dynamically (only after it has detected
@@ -156,13 +156,13 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // Set the pipeline state to Playing, which starts the data flow
     pipeline
         .set_state(gst::State::Playing)
-        .with_context(|| format!("Failed playing pipeline"))?;
+        .with_context(|| "Failed playing pipeline".to_string())?;
 
     // Listen for messages on the pipeline's bus
     // The bus carries messages from the pipeline elements about various events
     let bus = pipeline
         .bus()
-        .with_context(|| format!("Failed creating pipeline bus"))?;
+        .with_context(|| "Failed creating pipeline bus".to_string())?;
     for msg in bus.iter_timed(gst::ClockTime::NONE) {
         match msg.view() {
             gst::MessageView::Eos(..) => {
@@ -190,7 +190,7 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // Set the state to Null, which stops everything and frees resources
     pipeline
         .set_state(gst::State::Null)
-        .with_context(|| format!("Failed to shut down pipeline"))?;
+        .with_context(|| "Failed to shut down pipeline".to_string())?;
 
     Ok(())
 }

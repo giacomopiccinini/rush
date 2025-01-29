@@ -112,7 +112,7 @@ fn process_file(input: &Path, chunk_duration_sec: f32, output: &Path) -> Result<
     let total_samples = samples.len();
 
     // Calculate the number of chunks the file will be split into
-    let num_chunks = (total_samples + chunk_size - 1) / chunk_size;
+    let num_chunks = total_samples.div_ceil(chunk_size);
 
     // Calculate the number of digits needed when padding the name with 0's
     let padding_width = format!("{}", num_chunks - 1).len();

@@ -179,6 +179,21 @@ pub struct VideoToFramesArgs {
     pub output: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct VideoFromFramesArgs {
+    /// Input video file
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Target FPS
+    #[arg(required = true)]
+    pub fps: i32,
+
+    /// Output directory
+    #[arg(required = true)]
+    pub output: String,
+}
+
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
     /// Input file (CSV or parquet)

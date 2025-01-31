@@ -37,7 +37,7 @@ fn test_video_to_frames_nonexistent_path() -> Result<()> {
     // Define args with nonexistent path
     let args = VideoToFramesArgs {
         input: nonexistent_path.to_string_lossy().to_string(),
-        output: "output",
+        output: "output".to_string(),
     };
 
     // Execute command and expect error
@@ -62,7 +62,7 @@ fn test_video_to_frames_invalid_extension() -> Result<()> {
     // Define args
     let args = VideoToFramesArgs {
         input: invalid_path.to_string_lossy().to_string(),
-        output: "output",
+        output: "output".to_string(),
     };
 
     // Execute command and expect error

@@ -1,6 +1,6 @@
 [package]
 name = "rush"
-version = "1.0"
+version = "0.9.0"
 edition = "2021"
 repository = "https://github.com/giacomopiccinini/rush"
 rust-version = "1.81"
@@ -23,6 +23,8 @@ hashbrown = "0.15.1"
 gstreamer-video = "0.23.4"
 gstreamer = "0.23.4"
 gstreamer-app = "0.23.4"
+regex = "1.11.1"
+tempfile = "3.16.0"
 
 [dev-dependencies]
 uuid = { version = "1.0", features = ["v4"] }

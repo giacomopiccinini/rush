@@ -2,7 +2,8 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, CountArgs, ImageResizeArgs,
     ImageSummaryArgs, ImageTessellateArgs, ImageToLandscapeArgs, ImageToPortraitArgs,
-    TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoSummaryArgs, VideoToFramesArgs,
+    TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoFromFramesArgs, VideoSummaryArgs,
+    VideoToFramesArgs,
 };
 
 /// Rust implementation of bash commands
@@ -61,6 +62,7 @@ struct VideoCommand {
 enum VideoSubCommand {
     Summary(VideoSummaryArgs),
     ToFrames(VideoToFramesArgs),
+    FromFrames(VideoFromFramesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -109,6 +111,7 @@ fn main() {
         Command::Video(video_command) => match video_command.command {
             VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),
             VideoSubCommand::ToFrames(args) => rush::commands::video::to_frames::execute(args),
+            VideoSubCommand::FromFrames(args) => rush::commands::video::from_frames::execute(args),
         },
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => rush::commands::file::count::execute(args),

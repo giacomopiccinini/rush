@@ -39,6 +39,12 @@ pub fn execute(args: VideoFromFramesArgs) -> Result<()> {
     // Process files
     process_file(&input_path, fps, output).with_context(|| "Processing failed")?;
 
+    // If we created a temporary directory, clean it up
+    if input_frames_are_ok.is_err() {
+        fs::remove_dir_all(&input_path)
+            .with_context(|| format!("Failed to clean up temporary directory {}", input_path))?;
+    }
+
     Ok(())
 }
 

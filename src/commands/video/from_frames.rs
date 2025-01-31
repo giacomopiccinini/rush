@@ -24,11 +24,11 @@ pub fn execute(args: VideoFromFramesArgs) -> Result<()> {
     perform_io_sanity_check(input, output, true, true).with_context(|| "Sanity check failed")?;
 
     // Check if input is already sanitised
-    let input_frames_are_ok = check_frames_obey_rule(&input, r"frame\d+\.png");
+    let input_frames_are_ok = check_frames_obey_rule(input, r"frame\d+\.png");
 
     // Create a new input path to be used
-    let input_path = if !input_frames_are_ok.is_ok() {
-        create_sanitised_directory(&input)?
+    let input_path = if input_frames_are_ok.is_err() {
+        create_sanitised_directory(input)?
     } else {
         input
             .to_str()
@@ -54,7 +54,7 @@ fn check_frames_obey_rule(input: &Path, rule: &str) -> Result<bool> {
         .filter_map(|e| e.ok())
         .filter(|e| file_has_right_extension(&e.path(), &EXTENSIONS).is_ok())
         .map(|e| e.file_name().to_string_lossy().into_owned())
-        .filter(|e| !pattern.is_match(&e))
+        .filter(|e| !pattern.is_match(e))
         .collect();
 
     // Return to if everything is ok and all the frames respect the regex

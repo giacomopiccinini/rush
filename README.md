@@ -243,6 +243,21 @@ Example:
 rush video to-frames video.mp4 frames/
 ```
 
+#### `video from frames`
+Collect frames back into a video
+
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`
+**Input**: Needs to be a directory
+
+```bash
+rush video from-frames <input> <fps> <output>
+```
+
+Example:
+```bash
+rush video from-frames frames/ 30 output.mp4
+```
+
 ### File Commands
 
 #### `file count`

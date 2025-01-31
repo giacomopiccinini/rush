@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
 use gstreamer as gst;
 use gstreamer::prelude::*;
-use std::path::Path;
 use regex::Regex;
 use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 use tempfile;
 
@@ -30,7 +30,8 @@ pub fn execute(args: VideoFromFramesArgs) -> Result<()> {
     let input_path = if !input_frames_are_ok.is_ok() {
         create_sanitised_directory(&input)?
     } else {
-        input.to_str()
+        input
+            .to_str()
             .ok_or_else(|| anyhow::anyhow!("Failed to convert input path to string"))?
             .to_string()
     };
@@ -43,30 +44,29 @@ pub fn execute(args: VideoFromFramesArgs) -> Result<()> {
 
 // Function to check if frames have the correct structure
 fn check_frames_obey_rule(input: &Path, rule: &str) -> Result<bool> {
-
     // Create regex pattern
-    let pattern = Regex::new(&format!(r"^{}", input.join(rule).to_string_lossy())).with_context(|| "Failed to format regex")?;
+    let pattern = Regex::new(&format!(r"^{}", input.join(rule).to_string_lossy()))
+        .with_context(|| "Failed to format regex")?;
 
     // Find all images in a directory
     let invalid_frames: Vec<String> = fs::read_dir(input)
-    .with_context(|| "Failed to read directory")?
-    .filter_map(|e| e.ok())
-    .filter(|e| file_has_right_extension(&e.path(), &EXTENSIONS).is_ok())
-    .map(|e| e.file_name().to_string_lossy().into_owned())
-    .filter(|e| !pattern.is_match(&e))
-    .collect();
+        .with_context(|| "Failed to read directory")?
+        .filter_map(|e| e.ok())
+        .filter(|e| file_has_right_extension(&e.path(), &EXTENSIONS).is_ok())
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|e| !pattern.is_match(&e))
+        .collect();
 
     // Return to if everything is ok and all the frames respect the regex
     Ok(invalid_frames.is_empty())
-
 }
 
-// Create temporary directory. Images in input are read, sorted, and copied in the 
+// Create temporary directory. Images in input are read, sorted, and copied in the
 // temp directory following the frame%d.png pattern
 fn create_sanitised_directory(input: &Path) -> Result<String> {
     // Create temporary directory
     let temp_dir = tempfile::tempdir().with_context(|| "Failed to create temporary directory")?;
-    
+
     // Find all valid image files and sort them
     let mut image_files: Vec<PathBuf> = fs::read_dir(input)
         .with_context(|| "Failed to read directory")?
@@ -74,26 +74,31 @@ fn create_sanitised_directory(input: &Path) -> Result<String> {
         .map(|e| e.path())
         .filter(|p| file_has_right_extension(p, &EXTENSIONS).is_ok())
         .collect();
-    
+
     // Sort images
     image_files.sort();
 
     // Copy files to temp directory with sanitized names
     for (i, src_path) in image_files.iter().enumerate() {
         let dest_path = temp_dir.path().join(format!("frame{}.png", i));
-        fs::copy(src_path, &dest_path)
-            .with_context(|| format!("Failed to copy {} to {}", 
-                src_path.display(), dest_path.display()))?;
+        fs::copy(src_path, &dest_path).with_context(|| {
+            format!(
+                "Failed to copy {} to {}",
+                src_path.display(),
+                dest_path.display()
+            )
+        })?;
     }
 
     // Get the path as a string
-    let temp_path = temp_dir.path()
-    .to_str()
-    .ok_or_else(|| anyhow::anyhow!("Failed to convert temp directory path to string"))?
-    .to_string();
+    let temp_path = temp_dir
+        .path()
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("Failed to convert temp directory path to string"))?
+        .to_string();
 
     // Keep temp_dir alive by moving it into a variable that lives until the end of the function
-    std::mem::forget(temp_dir);  // Prevent the directory from being deleted when temp_dir is dropped
+    std::mem::forget(temp_dir); // Prevent the directory from being deleted when temp_dir is dropped
 
     Ok(temp_path)
 }
@@ -140,8 +145,8 @@ fn process_file(input: &String, fps: &i32, output: &Path) -> Result<()> {
     // x264enc: H.264 video encoder that compresses raw video frames
     let x264enc = gst::ElementFactory::make_with_name("x264enc", Some("x264enc"))
         .with_context(|| "Failed to create x264enc element".to_string())?;
-    x264enc.set_property("bitrate", 2000u32);  // Sets video bitrate to 2000 kbps
-    x264enc.set_property_from_str("speed-preset", "medium"); 
+    x264enc.set_property("bitrate", 2000u32); // Sets video bitrate to 2000 kbps
+    x264enc.set_property_from_str("speed-preset", "medium");
 
     // mp4mux: Multiplexes encoded video into an MP4 container format
     let mp4mux = gst::ElementFactory::make_with_name("mp4mux", Some("mp4mux"))
@@ -154,17 +159,24 @@ fn process_file(input: &String, fps: &i32, output: &Path) -> Result<()> {
 
     // Add all elements to the pipeline
     pipeline
-        .add_many([&multifilesrc, &pngdec, &videoconvert, &x264enc, &mp4mux, &filesink])
+        .add_many([
+            &multifilesrc,
+            &pngdec,
+            &videoconvert,
+            &x264enc,
+            &mp4mux,
+            &filesink,
+        ])
         .with_context(|| "Failed adding elements to GStreamer pipeline".to_string())?;
 
     // Link all elements in the pipeline
     gst::Element::link_many([
-        &multifilesrc, 
-        &pngdec, 
-        &videoconvert, 
-        &x264enc, 
-        &mp4mux, 
-        &filesink
+        &multifilesrc,
+        &pngdec,
+        &videoconvert,
+        &x264enc,
+        &mp4mux,
+        &filesink,
     ])
     .with_context(|| "Failed to link elements in pipeline".to_string())?;
 

@@ -2,7 +2,8 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, CountArgs, ImageResizeArgs,
     ImageSummaryArgs, ImageTessellateArgs, ImageToLandscapeArgs, ImageToPortraitArgs,
-    TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoSummaryArgs, VideoToFramesArgs, VideoFromFramesArgs
+    TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoFromFramesArgs, VideoSummaryArgs,
+    VideoToFramesArgs,
 };
 
 /// Rust implementation of bash commands

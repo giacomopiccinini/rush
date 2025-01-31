@@ -187,7 +187,7 @@ pub struct VideoFromFramesArgs {
 
     /// Target FPS
     #[arg(required = true)]
-    pub fps: i32,    
+    pub fps: i32,
 
     /// Output directory
     #[arg(required = true)]

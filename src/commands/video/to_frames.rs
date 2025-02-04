@@ -37,7 +37,7 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     //      filesrc location=<PATH_TO_VIDEO>! \
     //      decodebin ! \
     //      videoconvert ! \
-    //      pngenc ! \
+    //      jpegenc ! \
     //      multifilesink location="<TARGET_DIRECTORY>/img%d.png"
     //
     // Our goal is to replicate that pipeline using Rust bindings
@@ -61,19 +61,32 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // videoconvert: Converts video frames between different formats
     let videoconvert = gst::ElementFactory::make_with_name("videoconvert", Some("videoconvert"))
         .with_context(|| "Failed to create videoconvert".to_string())?;
-    // pngenc: Encodes raw video frames into PNG format
-    let pngenc = gst::ElementFactory::make_with_name("pngenc", Some("pngenc"))
-        .with_context(|| "Failed to create pngenc".to_string())?;
+    // jpegenc: Encodes raw video frames into PNG format
+    let jpegenc = gst::ElementFactory::make_with_name("jpegenc", Some("jpegenc"))
+        .with_context(|| "Failed to create jpegenc".to_string())?;
     // multifilesink: Saves buffers to a series of sequentially-named files
+    let stem = input
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .with_context(|| "Failed to get input filename")?;
     let multifilesink = gst::ElementFactory::make_with_name("multifilesink", Some("multifilesink"))
         .with_context(|| "Failed to create multifilesink".to_string())?;
-    multifilesink.set_property("location", output.join("frame%d.png").to_str());
+    multifilesink.set_property(
+        "location",
+        output.join(format!("{}-frame%d.jpeg", stem)).to_str(),
+    );
 
     // Add all elements to the pipeline
     // Elements must be added to the pipeline before they can be used
     // This is the replica of the CLI pipeline we defined above
     pipeline
-        .add_many([&filesrc, &decodebin, &videoconvert, &pngenc, &multifilesink])
+        .add_many([
+            &filesrc,
+            &decodebin,
+            &videoconvert,
+            &jpegenc,
+            &multifilesink,
+        ])
         .with_context(|| "Failed adding elements to GStreamer pipeline".to_string())?;
 
     // Link what we can statically:
@@ -85,9 +98,9 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     gst::Element::link_many([&filesrc, &decodebin])
         .with_context(|| "Failed to link filesrc and decodebin".to_string())?;
 
-    // Link videoconvert → pngenc → multifilesink
-    gst::Element::link_many([&videoconvert, &pngenc, &multifilesink])
-        .with_context(|| "Failed to link videoconvert, pngenc and multifilesink".to_string())?;
+    // Link videoconvert → jpegenc → multifilesink
+    gst::Element::link_many([&videoconvert, &jpegenc, &multifilesink])
+        .with_context(|| "Failed to link videoconvert, jpegenc and multifilesink".to_string())?;
 
     // Connect decodebin's "pad-added" signal
     // Since decodebin creates its output pads dynamically (only after it has detected

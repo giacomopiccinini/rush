@@ -5,8 +5,12 @@ edition = "2021"
 repository = "https://github.com/giacomopiccinini/rush"
 rust-version = "1.81"
 authors = ["Giacomo Piccinini <giacomo.piccinini@proton.me>"]
-description = "Swiss-army knife for data inspection and manipulation"
+description = "Swiss-army knife for media inspection and manipulation"
 license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/giacomopiccinini/rush"
+keywords = ["cli", "multimedia", "data", "data-engineering"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 anyhow = "1.0.91"

@@ -1,6 +1,6 @@
 # rush
 
-A Swiss-army knife CLI tool for data inspection and manipulation, written in Rust.
+A Swiss-army knife CLI tool for media inspection and manipulation, written in Rust.
 
 ![](https://github.com/giacomopiccinini/rush/blob/main/assets/rush.gif)
 

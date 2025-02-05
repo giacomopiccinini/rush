@@ -1,5 +1,5 @@
 [package]
-name = "rush-media"
+name = "rush"
 version = "1.0.1"
 edition = "2021"
 repository = "https://github.com/giacomopiccinini/rush"

@@ -101,7 +101,7 @@ fn process_file(input: &Path, output: &Path, overwrite: bool) -> Result<()> {
 
     // Save image
     output_img
-        .save(&output)
+        .save(output)
         .with_context(|| format!("Couldn't save image to {:?}", output))?;
 
     Ok(())

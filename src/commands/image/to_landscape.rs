@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use image::image_dimensions;
-use image::imageops::rotate90;
 use image::io::Reader as ImageReader;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
@@ -93,8 +92,12 @@ fn process_file(input: &Path, output: &Path, overwrite: bool) -> Result<()> {
         .decode()
         .with_context(|| "Can't decode image")?;
 
-    // Resize image
-    let output_img = rotate90(&input_img);
+    // Only rotate if the image is in portrait orientation
+    let output_img = if input_img.width() < input_img.height() {
+        input_img.rotate90()
+    } else {
+        input_img
+    };
 
     // Save image
     output_img

@@ -2282,7 +2282,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rush-media"
+name = "rush"
 version = "1.0.1"
 dependencies = [
  "anyhow",

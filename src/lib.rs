@@ -5,7 +5,13 @@ pub mod utils;
 
 // Export all the Args structs as they're needed by both the CLI and tests
 #[derive(Debug, Parser)]
-pub struct CountArgs {
+pub struct FileCountArgs {
+    /// Target directory or file
+    pub target: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct FileExtensionArgs {
     /// Target directory or file
     pub target: String,
 }

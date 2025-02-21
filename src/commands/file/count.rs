@@ -1,10 +1,10 @@
-use crate::CountArgs;
+use crate::FileCountArgs;
 use anyhow::Result;
 use rayon::prelude::*;
 use std::path::Path;
 use walkdir::WalkDir;
 
-pub fn execute(args: CountArgs) -> Result<()> {
+pub fn execute(args: FileCountArgs) -> Result<()> {
     // Convert to path object
     let target_path = Path::new(&args.target);
 

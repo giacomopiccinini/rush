@@ -1,6 +1,6 @@
 use clap::{Args, Parser, Subcommand};
 use rush::{
-    AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, CountArgs, ImageResizeArgs,
+    AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, FileCountArgs, FileExtensionArgs, ImageResizeArgs,
     ImageSummaryArgs, ImageTessellateArgs, ImageToLandscapeArgs, ImageToPortraitArgs,
     TableSchemaArgs, TableToCsvArgs, TableToParquetArgs, VideoFromFramesArgs, VideoSummaryArgs,
     VideoToFramesArgs,
@@ -73,7 +73,8 @@ struct FileCommand {
 
 #[derive(Debug, Subcommand)]
 enum FileSubCommand {
-    Count(CountArgs),
+    Count(FileCountArgs),
+    Extension(FileExtensionArgs),
 }
 
 #[derive(Debug, Args)]
@@ -115,6 +116,7 @@ fn main() {
         },
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => rush::commands::file::count::execute(args),
+            FileSubCommand::Extension(args) => rush::commands::file::extension::execute(args),
         },
         Command::Table(table_command) => match table_command.command {
             TableSubCommand::Schema(args) => rush::commands::table::schema::execute(args),

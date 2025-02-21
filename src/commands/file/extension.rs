@@ -1,9 +1,8 @@
 use anyhow::Result;
 use rayon::prelude::*;
+use std::collections::HashMap;
 use std::path::Path;
 use walkdir::WalkDir;
-use std::collections::HashMap;
-
 
 use crate::FileExtensionArgs;
 
@@ -18,11 +17,11 @@ pub fn execute(args: FileExtensionArgs) -> Result<()> {
     }
 
     // If target is file, return its extension
-    if target.is_file(){
+    if target.is_file() {
         println!("{:?}: 1", target.extension().and_then(|ext| ext.to_str()));
     }
     // If it's a directory, find all extensions
-    else{
+    else {
         // Collect extensions and count them using a HashMap
         let extension_counts: HashMap<String, usize> = WalkDir::new(target)
             .max_depth(1)
@@ -30,22 +29,16 @@ pub fn execute(args: FileExtensionArgs) -> Result<()> {
             .filter_map(Result::ok)
             .par_bridge() // Convert to parallel iterator
             .filter_map(|entry| entry.path().extension()?.to_str().map(String::from))
-            .fold(
-                || HashMap::new(),
-                |mut acc, ext| {
-                    *acc.entry(ext).or_insert(0) += 1;
-                    acc
-                },
-            )
-            .reduce(
-                || HashMap::new(),
-                |mut map1, map2| {
-                    map2.into_iter().for_each(|(key, value)| {
-                        *map1.entry(key).or_insert(0) += value;
-                    });
-                    map1
-                },
-            );
+            .fold(HashMap::new, |mut acc, ext| {
+                *acc.entry(ext).or_insert(0) += 1;
+                acc
+            })
+            .reduce(HashMap::new, |mut map1, map2| {
+                map2.into_iter().for_each(|(key, value)| {
+                    *map1.entry(key).or_insert(0) += value;
+                });
+                map1
+            });
 
         // Print each extension and its count
         for (ext, count) in extension_counts.iter() {

@@ -18,7 +18,13 @@ pub fn execute(args: FileExtensionArgs) -> Result<()> {
 
     // If target is file, return its extension
     if target.is_file() {
-        println!("{:?}: 1", target.extension().and_then(|ext| ext.to_str()).unwrap_or("no extension"));
+        println!(
+            "{:?}: 1",
+            target
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .unwrap_or("no extension")
+        );
     }
     // If it's a directory, find all extensions
     else {

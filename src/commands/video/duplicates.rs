@@ -53,7 +53,7 @@ pub fn execute(args: VideoDuplicatesArgs) -> Result<()> {
         .filter_map(Result::ok)
         .fold(
             || HashMap::new(),
-            |mut acc, (hash, path)| {
+            |mut acc: std::collections::HashMap<std::string::String, V>, (hash, path)| {
                 acc.entry(hash).or_insert_with(Vec::new).push(path);
                 acc
             },

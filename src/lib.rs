@@ -207,7 +207,6 @@ pub struct VideoDuplicatesArgs {
     pub target: String,
 }
 
-
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
     /// Input file (CSV or parquet)

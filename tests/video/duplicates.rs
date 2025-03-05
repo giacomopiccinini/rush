@@ -2,7 +2,6 @@ use crate::utils::{cleanup_test_dir, create_test_video, setup_test_dir};
 use anyhow::Result;
 use rush::commands::video;
 use rush::VideoDuplicatesArgs;
-use std::fs;
 
 #[test]
 fn test_video_duplicates_success() -> Result<()> {
@@ -59,7 +58,7 @@ fn test_video_duplicates_nonexistent_path() -> Result<()> {
 fn test_video_duplicates_not_a_directory() -> Result<()> {
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
-    
+
     // Create a single video file
     let video_path = test_dir.join("video.mp4");
     create_test_video(&video_path, 1280, 720, 3.0, 24)?;
@@ -83,7 +82,7 @@ fn test_video_duplicates_not_a_directory() -> Result<()> {
 fn test_video_duplicates_insufficient_files() -> Result<()> {
     // Set up the directory for testing
     let test_dir = setup_test_dir()?;
-    
+
     // Create a single video file
     let video_path = test_dir.join("video.mp4");
     create_test_video(&video_path, 1280, 720, 3.0, 24)?;

@@ -229,6 +229,13 @@ pub struct TableToCsvArgs {
     pub output: String,
 }
 
+#[derive(Debug, Args)]
+pub struct TableSummaryArgs {
+    /// Target file
+    #[arg(required = true)]
+    pub target: String,
+}
+
 // Error handling utility that can be used by both lib and binary
 pub fn handle_error(e: anyhow::Error) {
     eprintln!("Error!");

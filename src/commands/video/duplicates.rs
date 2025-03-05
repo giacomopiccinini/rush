@@ -52,21 +52,18 @@ pub fn execute(args: VideoDuplicatesArgs) -> Result<()> {
         })
         .filter_map(Result::ok)
         .fold(
-            || HashMap::new(),
+            HashMap::new,
             |mut acc: HashMap<String, Vec<PathBuf>>, (hash, path)| {
-                acc.entry(hash).or_insert_with(Vec::new).push(path);
+                acc.entry(hash).or_default().push(path);
                 acc
             },
         )
-        .reduce(
-            || HashMap::new(),
-            |mut a, b| {
-                for (hash, paths) in b {
-                    a.entry(hash).or_insert_with(Vec::new).extend(paths);
-                }
-                a
-            },
-        );
+        .reduce(HashMap::new, |mut a, b| {
+            for (hash, paths) in b {
+                a.entry(hash).or_default().extend(paths);
+            }
+            a
+        });
 
     // Print duplicates
     for (hash, files) in hash_map.iter() {

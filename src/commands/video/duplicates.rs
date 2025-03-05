@@ -45,9 +45,7 @@ pub fn execute(args: VideoDuplicatesArgs) -> Result<()> {
     // Calculate hashes
     let hashes: Vec<(String, PathBuf)> = video_files
         .par_iter()
-        .filter_map(|file| {
-            process_video(file).ok().map(|hash| (hash, file.clone()))
-        })
+        .filter_map(|file| process_video(file).ok().map(|hash| (hash, file.clone())))
         .collect();
 
     // Group files by hash to find duplicates

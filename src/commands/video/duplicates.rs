@@ -42,32 +42,25 @@ pub fn execute(args: VideoDuplicatesArgs) -> Result<()> {
         return Err(anyhow::Error::msg("Directory contains less than 2 files"));
     }
 
-    // Calculate hashes in parallel
-    let hash_map: HashMap<String, Vec<PathBuf>> = video_files
+    // Calculate hashes
+    let hashes: Vec<(String, PathBuf)> = video_files
         .par_iter()
-        .map(|file| -> Result<(String, PathBuf)> {
-            let hash = process_video(file)
-                .with_context(|| format!("Failed to process file: {:?}", file))?;
-            Ok((hash, file.clone()))
+        .filter_map(|file| {
+            process_video(file).ok().map(|hash| (hash, file.clone()))
         })
-        .filter_map(Result::ok)
-        .fold(
-            HashMap::new,
-            |mut acc: HashMap<String, Vec<PathBuf>>, (hash, path)| {
-                acc.entry(hash).or_default().push(path);
-                acc
-            },
-        )
-        .reduce(HashMap::new, |mut a, b| {
-            for (hash, paths) in b {
-                a.entry(hash).or_default().extend(paths);
-            }
-            a
-        });
+        .collect();
+
+    // Group files by hash to find duplicates
+    let mut hash_map: HashMap<String, Vec<PathBuf>> = HashMap::new();
+    for (hash, path) in hashes {
+        hash_map.entry(hash).or_default().push(path);
+    }
 
     // Print duplicates
+    let mut found_duplicates = false;
     for (hash, files) in hash_map.iter() {
         if files.len() > 1 {
+            found_duplicates = true;
             println!("Duplicate files with hash {}:", hash);
             for file in files {
                 println!("  {}", file.display());
@@ -76,17 +69,21 @@ pub fn execute(args: VideoDuplicatesArgs) -> Result<()> {
         }
     }
 
+    if !found_duplicates {
+        println!("No duplicate files found.");
+    }
+
     Ok(())
 }
 
-fn process_video<P: AsRef<Path>>(path: P) -> Result<String> {
+fn process_video(path: &Path) -> Result<String> {
     // Open file
     let file = File::open(path).with_context(|| "Impossible to open file")?;
 
     // Init buffer
     let mut reader = BufReader::new(file);
     let mut hasher = Sha256::new();
-    let mut buffer = [0; 1024 * 1024]; // 1MB buffer
+    let mut buffer = vec![0; 1024 * 1024];
 
     // Read bytes untile there are left
     loop {

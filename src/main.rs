@@ -7,7 +7,7 @@ use rush::{
     VideoToFramesArgs,
 };
 
-/// Swiss-army knife for media inspection and manipulation 
+/// Swiss-army knife for media inspection and manipulation
 #[derive(Debug, Parser)]
 #[clap(name = "rush", version)]
 pub struct App {

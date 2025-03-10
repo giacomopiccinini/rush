@@ -2,10 +2,10 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, FileCountArgs,
     FileExtensionArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
-    ImageToLandscapeArgs, ImageToLandscapeArgs, ImageToPortraitArgs, ImageToPortraitArgs,
-    TableSchemaArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs, TableToCsvArgs,
-    TableToParquetArgs, TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs,
-    VideoFromFramesArgs, VideoSummaryArgs, VideoSummaryArgs, VideoToFramesArgs, VideoToFramesArgs,
+    ImageToLandscapeArgs, ImageToPortraitArgs,
+    TableSchemaArgs, TableSummaryArgs, TableToCsvArgs, TableToCsvArgs,
+    TableToParquetArgs, VideoDuplicatesArgs,
+    VideoFromFramesArgs, VideoSummaryArgs, VideoToFramesArgs, 
 };
 
 /// Rust implementation of bash commands

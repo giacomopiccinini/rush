@@ -23,7 +23,7 @@ pub fn execute(args: TableSummaryArgs) -> Result<()> {
     let df = read_table(target)
         .with_context(|| format!("File {:?} could not be read", target))?
         .collect()
-        .with_context(|| format!("Cannot collect Dataframe"))?;
+        .with_context(|| "Cannot collect Dataframe".to_string())?;
 
     println!("{:?}", df.head(Some(5_usize)));
     println!("------------");

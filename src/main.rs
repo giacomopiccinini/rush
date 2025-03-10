@@ -2,8 +2,10 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, FileCountArgs,
     FileExtensionArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
-    ImageToLandscapeArgs, ImageToPortraitArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
-    TableToParquetArgs, VideoFromFramesArgs, VideoSummaryArgs, VideoToFramesArgs,
+    ImageToLandscapeArgs, ImageToLandscapeArgs, ImageToPortraitArgs, ImageToPortraitArgs,
+    TableSchemaArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs, TableToCsvArgs,
+    TableToParquetArgs, TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs,
+    VideoFromFramesArgs, VideoSummaryArgs, VideoSummaryArgs, VideoToFramesArgs, VideoToFramesArgs,
 };
 
 /// Rust implementation of bash commands
@@ -63,6 +65,7 @@ enum VideoSubCommand {
     Summary(VideoSummaryArgs),
     ToFrames(VideoToFramesArgs),
     FromFrames(VideoFromFramesArgs),
+    Duplicates(VideoDuplicatesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -114,6 +117,7 @@ fn main() {
             VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),
             VideoSubCommand::ToFrames(args) => rush::commands::video::to_frames::execute(args),
             VideoSubCommand::FromFrames(args) => rush::commands::video::from_frames::execute(args),
+            VideoSubCommand::Duplicates(args) => rush::commands::video::duplicates::execute(args),
         },
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => rush::commands::file::count::execute(args),

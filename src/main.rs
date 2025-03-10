@@ -7,7 +7,7 @@ use rush::{
     VideoToFramesArgs,
 };
 
-/// Rust implementation of bash commands
+/// Swiss-army knife for media inspection and manipulation 
 #[derive(Debug, Parser)]
 #[clap(name = "rush", version)]
 pub struct App {

@@ -11,9 +11,7 @@ pub fn execute(args: TableSummaryArgs) -> Result<()> {
 
     // Error if it does not exist at all
     if !target.exists() {
-        return Err(anyhow::Error::msg(
-            "File does not exist",
-        ));
+        return Err(anyhow::Error::msg("File does not exist"));
     }
 
     // Check that the target is a file
@@ -22,10 +20,14 @@ pub fn execute(args: TableSummaryArgs) -> Result<()> {
     }
 
     // Read the df
-    let mut df =
-        read_table(target).with_context(|| format!("File {:?} could not be read", target))?;
+    let df = read_table(target)
+        .with_context(|| format!("File {:?} could not be read", target))?
+        .collect()
+        .with_context(|| format!("Cannot collect Dataframe"))?;
 
-    println!("{:?}", df.describe()?);
+    println!("{:?}", df.head(Some(5_usize)));
+    println!("------------");
+    println!("{:?}", df.tail(Some(5_usize)));
 
     Ok(())
 }

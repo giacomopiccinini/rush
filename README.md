@@ -30,8 +30,7 @@ Rush aims to:
 
 ### Typical Workflow
 
-Rush exposes a consistent syntax across modalities following the pattern```bash
-rush <MEDIA> <COMMAND> <OPTIONS>```
+Rush exposes a consistent syntax across modalities following the pattern `rush <MEDIA> <COMMAND> <OPTIONS>`
 To summarise the imagery in a directory (with all subdirectories included) run
 ```bash
 rush image summary photos/
@@ -52,6 +51,7 @@ rush image summary reshaped-photos/
 ```
 
 ## Installation
+After cloning the repo, run
 ```bash
 cargo install --path .
 ```
@@ -202,6 +202,40 @@ rush image tessellate photo.jpg 2 3 tiles/
 
 This splits the image into a 2×3 grid (6 pieces).
 
+#### `image to-landscape`
+Rotate images to landscape mode. 
+
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`  
+**Input**: Can be a single file or directory (recursive)
+
+```bash
+rush image to-landscape <input> <output> [--overwrite]
+```
+
+Example:
+```bash
+rush image to-landscape my-images/ my-images/ --overwrite
+```
+
+This replaces every image in portrait mode with its rotated version. 
+
+#### `image to-portrait`
+Rotate images to portrait mode. 
+
+**Supported Extensions**: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`  
+**Input**: Can be a single file or directory (recursive)
+
+```bash
+rush image to-portrait <input> <output> [--overwrite]
+```
+
+Example:
+```bash
+rush image to-portrait my-images/ my-images/ --overwrite
+```
+
+This replaces every image in landscape mode with its rotated version. 
+
 ### Video Commands
 
 #### `video summary`
@@ -228,7 +262,7 @@ Unique (height, width) pairs: {(1080, 1920), (720, 1280)}
 Unique FPS: {(30, 1), (60, 1)}
 ```
 
-#### `video to frames`
+#### `video to-frames`
 Extract frames from a video
 
 **Supported Extensions**: `.ts`, `.mp4`, `.mkv`, `.mov`  
@@ -243,7 +277,7 @@ Example:
 rush video to-frames video.mp4 frames/
 ```
 
-#### `video from frames`
+#### `video from-frames`
 Collect frames back into a video
 
 **Supported Extensions**: `.jpg`, `.jpeg`, `.png`
@@ -257,6 +291,22 @@ Example:
 ```bash
 rush video from-frames frames/ 30 output.mp4
 ```
+
+#### `video duplicates`
+Find duplicated videos in a directory. 
+
+**Supported Extensions**: `ts`, `mp4`, `mkv`, `mov`
+**Input**: Needs to be a directory
+
+```bash
+rush video duplicates <target>
+```
+
+Example:
+```bash
+rush video duplicates my_videos/
+```
+
 
 ### File Commands
 
@@ -279,6 +329,21 @@ Output:
 ```
 Files: 145
 Directories: 12
+```
+
+#### `file extension`
+Find and count all the instances of file extensions.
+
+**Supported Extensions**: All files  
+**Input**: Can be a single file or directory (non-recursive, only immediate children)
+
+```bash
+rush file extension <target>
+```
+
+Example:
+```bash
+rush file extension documents/
 ```
 
 ### Table Commands
@@ -307,3 +372,47 @@ name: Department, field: String
 name: Salary, field: Int64
 ```
 
+#### `table summary`
+Show the first five and last five rows of a table. 
+
+**Supported Extensions**: `.csv`, `.parquet`  
+**Input**: Single file only (directories not supported)
+
+```bash
+rush table summary <input>
+```
+
+Example:
+```bash
+rush table summary data.csv
+```
+
+#### `table to-csv`
+Convert a .parquet file to .csv.
+
+**Supported Extensions**: `.parquet`  
+**Input**: Single file only (directories not supported)
+
+```bash
+rush table to-csv <input> <output>
+```
+
+Example:
+```bash
+rush table to-csv data.parquet data.csv
+```
+
+#### `table to-parquet`
+Convert a .csv file to .parquet.
+
+**Supported Extensions**: `.csv`
+**Input**: Single file only (directories not supported)
+
+```bash
+rush table to-parquet <input> <output>
+```
+
+Example:
+```bash
+rush table to-parquet data.csv data.parquet
+```

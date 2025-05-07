@@ -10,7 +10,7 @@ use crate::utils::file_has_right_extension;
 use crate::ImageSummaryArgs;
 
 // Admissible extensions for this command
-const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"];
+const EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff", "tif"];
 
 pub fn execute(args: ImageSummaryArgs) -> Result<()> {
     // Parse the arguments

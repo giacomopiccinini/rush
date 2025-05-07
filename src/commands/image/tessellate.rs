@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 use crate::utils::{file_has_right_extension, perform_io_sanity_check};
 
 // Admissible extensions for this command
-const EXTENSIONS: [&str; 6] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff"];
+const EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "bmp", "gif", "tiff", "tif"];
 
 use crate::ImageTessellateArgs;
 

@@ -22,3 +22,7 @@ test:
 # Remove binaries
 clean:
     @cargo clean
+
+# Install rush
+install:
+    @cargo install --path .

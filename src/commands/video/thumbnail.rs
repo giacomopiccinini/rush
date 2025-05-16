@@ -65,7 +65,7 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     let jpegenc = gst::ElementFactory::make_with_name("jpegenc", Some("jpegenc"))
         .with_context(|| "Failed to create jpegenc".to_string())?;
     // Set property snapshot to true so that we extract a single frame
-    jpegenc.set_property("snapshot", &(true));
+    jpegenc.set_property("snapshot", true);
     // filesink: Saves buffers to a series of sequentially-named files
     let stem = input
         .file_stem()
@@ -73,22 +73,13 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
         .with_context(|| "Failed to get input filename")?;
     let filesink = gst::ElementFactory::make_with_name("filesink", Some("filesink"))
         .with_context(|| "Failed to create filesink".to_string())?;
-    filesink.set_property(
-        "location",
-        output.join(format!("{}.jpeg", stem)).to_str(),
-    );
+    filesink.set_property("location", output.join(format!("{}.jpeg", stem)).to_str());
 
     // Add all elements to the pipeline
     // Elements must be added to the pipeline before they can be used
     // This is the replica of the CLI pipeline we defined above
     pipeline
-        .add_many([
-            &filesrc,
-            &decodebin,
-            &videoconvert,
-            &jpegenc,
-            &filesink,
-        ])
+        .add_many([&filesrc, &decodebin, &videoconvert, &jpegenc, &filesink])
         .with_context(|| "Failed adding elements to GStreamer pipeline".to_string())?;
 
     // Link what we can statically:

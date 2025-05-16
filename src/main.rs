@@ -4,7 +4,7 @@ use rush::{
     FileExtensionArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
     ImageToLandscapeArgs, ImageToPortraitArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
     TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs, VideoSummaryArgs,
-    VideoToFramesArgs, VideoThumbnailArgs,
+    VideoThumbnailArgs, VideoToFramesArgs,
 };
 
 /// Swiss-army knife for media inspection and manipulation

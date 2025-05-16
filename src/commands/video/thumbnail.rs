@@ -6,12 +6,12 @@ use std::path::Path;
 
 use crate::utils::{file_has_right_extension, perform_io_sanity_check};
 
-use crate::VideoToFramesArgs;
+use crate::VideoThumbnailArgs;
 
 // Admissible extensions for this command
-const EXTENSIONS: [&str; 4] = ["ts", "mp4", "mkv", "mov"];
+const EXTENSIONS: [&str; 5] = ["ts", "mp4", "mkv", "mov", "webm"];
 
-pub fn execute(args: VideoToFramesArgs) -> Result<()> {
+pub fn execute(args: VideoThumbnailArgs) -> Result<()> {
     // Parse the arguments
     let input = Path::new(&args.input);
     let output = Path::new(&args.output);
@@ -34,11 +34,11 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // The pipeline converting a video to frames would be of the form
     //
     //      gst-launch-1.0 \
-    //      filesrc location=<PATH_TO_VIDEO>! \
+    //      filesrc location=<PATH_TO_VIDEO> ! \
     //      decodebin ! \
     //      videoconvert ! \
-    //      jpegenc ! \
-    //      multifilesink location="<TARGET_DIRECTORY>/img%d.png"
+    //      jpegenc snapshot=TRUE ! \
+    //      filesink location="<VIDEO_STEM>.jpeg"
     //
     // Our goal is to replicate that pipeline using Rust bindings
 
@@ -64,29 +64,22 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     // jpegenc: Encodes raw video frames into PNG format
     let jpegenc = gst::ElementFactory::make_with_name("jpegenc", Some("jpegenc"))
         .with_context(|| "Failed to create jpegenc".to_string())?;
-    // multifilesink: Saves buffers to a series of sequentially-named files
+    // Set property snapshot to true so that we extract a single frame
+    jpegenc.set_property("snapshot", true);
+    // filesink: Saves buffers to a series of sequentially-named files
     let stem = input
         .file_stem()
         .and_then(|s| s.to_str())
         .with_context(|| "Failed to get input filename")?;
-    let multifilesink = gst::ElementFactory::make_with_name("multifilesink", Some("multifilesink"))
-        .with_context(|| "Failed to create multifilesink".to_string())?;
-    multifilesink.set_property(
-        "location",
-        output.join(format!("{}-frame%d.jpeg", stem)).to_str(),
-    );
+    let filesink = gst::ElementFactory::make_with_name("filesink", Some("filesink"))
+        .with_context(|| "Failed to create filesink".to_string())?;
+    filesink.set_property("location", output.join(format!("{}.jpeg", stem)).to_str());
 
     // Add all elements to the pipeline
     // Elements must be added to the pipeline before they can be used
     // This is the replica of the CLI pipeline we defined above
     pipeline
-        .add_many([
-            &filesrc,
-            &decodebin,
-            &videoconvert,
-            &jpegenc,
-            &multifilesink,
-        ])
+        .add_many([&filesrc, &decodebin, &videoconvert, &jpegenc, &filesink])
         .with_context(|| "Failed adding elements to GStreamer pipeline".to_string())?;
 
     // Link what we can statically:
@@ -98,9 +91,9 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     gst::Element::link_many([&filesrc, &decodebin])
         .with_context(|| "Failed to link filesrc and decodebin".to_string())?;
 
-    // Link videoconvert → jpegenc → multifilesink
-    gst::Element::link_many([&videoconvert, &jpegenc, &multifilesink])
-        .with_context(|| "Failed to link videoconvert, jpegenc and multifilesink".to_string())?;
+    // Link videoconvert → jpegenc → filesink
+    gst::Element::link_many([&videoconvert, &jpegenc, &filesink])
+        .with_context(|| "Failed to link videoconvert, jpegenc and filesink".to_string())?;
 
     // Connect decodebin's "pad-added" signal
     // Since decodebin creates its output pads dynamically (only after it has detected
@@ -178,7 +171,6 @@ fn process_file(input: &Path, output: &Path) -> Result<()> {
     for msg in bus.iter_timed(gst::ClockTime::NONE) {
         match msg.view() {
             gst::MessageView::Eos(..) => {
-                // End-of-Stream message: all data has been processed
                 break;
             }
             gst::MessageView::Error(err) => {

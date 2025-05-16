@@ -207,6 +207,17 @@ pub struct VideoDuplicatesArgs {
     pub target: String,
 }
 
+#[derive(Debug, Parser)]
+pub struct VideoThumbnailArgs {
+    /// Input video file
+    #[arg(required = true)]
+    pub input: String,
+
+    /// Output directory
+    #[arg(required = true)]
+    pub output: String,
+}
+
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {
     /// Input file (CSV or parquet)

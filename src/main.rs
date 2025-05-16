@@ -4,7 +4,7 @@ use rush::{
     FileExtensionArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
     ImageToLandscapeArgs, ImageToPortraitArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
     TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs, VideoSummaryArgs,
-    VideoToFramesArgs,
+    VideoToFramesArgs, VideoThumbnailArgs,
 };
 
 /// Swiss-army knife for media inspection and manipulation
@@ -17,10 +17,15 @@ pub struct App {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Commands for audio files
     Audio(AudioCommand),
+    /// Commands for image files
     Image(ImageCommand),
+    /// Commands for video files
     Video(VideoCommand),
+    /// Commands for generic files
     File(FileCommand),
+    /// Commands for tabular files
     Table(TableCommand),
 }
 
@@ -32,9 +37,13 @@ struct AudioCommand {
 
 #[derive(Debug, Subcommand)]
 enum AudioSubCommand {
+    /// Summary of audio content of file or directory
     Summary(AudioSummaryArgs),
+    /// Split audio file in chunks of fixed length
     Split(AudioSplitArgs),
+    /// Resample audio file
     Resample(AudioResampleArgs),
+    /// Trim audio file to given length (possibly with initial offset)
     Trim(AudioTrimArgs),
 }
 
@@ -46,10 +55,15 @@ struct ImageCommand {
 
 #[derive(Debug, Subcommand)]
 enum ImageSubCommand {
+    /// Summary of image content of file or directory
     Summary(ImageSummaryArgs),
+    /// Resize image to a fixed height and width
     Resize(ImageResizeArgs),
+    /// Divide image into tiles
     Tessellate(ImageTessellateArgs),
+    /// Rotate to landscape
     ToLandscape(ImageToLandscapeArgs),
+    /// Rotate to portrait
     ToPortrait(ImageToPortraitArgs),
 }
 
@@ -61,10 +75,16 @@ struct VideoCommand {
 
 #[derive(Debug, Subcommand)]
 enum VideoSubCommand {
+    /// Summary of video content of file or directory
     Summary(VideoSummaryArgs),
+    /// Extract frames from video file
     ToFrames(VideoToFramesArgs),
+    /// Collect frames into a video
     FromFrames(VideoFromFramesArgs),
+    /// Find duplicated video files
     Duplicates(VideoDuplicatesArgs),
+    /// Create video thumbnail
+    Thumbnail(VideoThumbnailArgs),
 }
 
 #[derive(Debug, Args)]
@@ -75,7 +95,9 @@ struct FileCommand {
 
 #[derive(Debug, Subcommand)]
 enum FileSubCommand {
+    /// Count files and directories
     Count(FileCountArgs),
+    /// Find unique extensions
     Extension(FileExtensionArgs),
 }
 
@@ -87,9 +109,13 @@ struct TableCommand {
 
 #[derive(Debug, Subcommand)]
 enum TableSubCommand {
+    /// Get tabular file schema
     Schema(TableSchemaArgs),
+    /// Convert CSV file to parquet
     ToParquet(TableToParquetArgs),
+    /// Convert parquet file to CSV
     ToCsv(TableToCsvArgs),
+    /// Summary of tabular file
     Summary(TableSummaryArgs),
 }
 
@@ -117,6 +143,7 @@ fn main() {
             VideoSubCommand::ToFrames(args) => rush::commands::video::to_frames::execute(args),
             VideoSubCommand::FromFrames(args) => rush::commands::video::from_frames::execute(args),
             VideoSubCommand::Duplicates(args) => rush::commands::video::duplicates::execute(args),
+            VideoSubCommand::Thumbnail(args) => rush::commands::video::thumbnail::execute(args),
         },
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => rush::commands::file::count::execute(args),

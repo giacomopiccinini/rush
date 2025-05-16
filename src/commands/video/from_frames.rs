@@ -199,7 +199,6 @@ fn process_file(input: &String, fps: &i32, output: &Path) -> Result<()> {
         match msg.view() {
             gst::MessageView::Eos(..) => {
                 // End-of-Stream message: all data has been processed
-                println!("End of stream reached.");
                 break;
             }
             gst::MessageView::Error(err) => {

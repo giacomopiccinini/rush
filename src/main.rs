@@ -2,7 +2,7 @@ use clap::{Args, Parser, Subcommand};
 use rush::{
     AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, FileCountArgs,
     FileExtensionArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
-    ImageToLandscapeArgs, ImageToPortraitArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
+    ImageToLandscapeArgs, ImageToPortraitArgs, ImageDuplicatesArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
     TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs, VideoSummaryArgs,
     VideoThumbnailArgs, VideoToFramesArgs,
 };
@@ -65,6 +65,8 @@ enum ImageSubCommand {
     ToLandscape(ImageToLandscapeArgs),
     /// Rotate to portrait
     ToPortrait(ImageToPortraitArgs),
+    /// Find duplicated images
+    Duplicates(ImageDuplicatesArgs),
 }
 
 #[derive(Debug, Args)]
@@ -137,6 +139,7 @@ fn main() {
                 rush::commands::image::to_landscape::execute(args)
             }
             ImageSubCommand::ToPortrait(args) => rush::commands::image::to_portrait::execute(args),
+            ImageSubCommand::Duplicates(args) => rush::commands::image::duplicates::execute(args),
         },
         Command::Video(video_command) => match video_command.command {
             VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),

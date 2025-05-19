@@ -100,6 +100,13 @@ pub struct ImageToPortraitArgs {
 }
 
 #[derive(Debug, Parser)]
+pub struct ImageDuplicatesArgs {
+    /// Target image directory
+    #[arg(required = true)]
+    pub target: String,
+}
+
+#[derive(Debug, Parser)]
 pub struct AudioSummaryArgs {
     /// Target directory or file
     #[arg(required = true)]

@@ -1,3 +1,4 @@
+mod duplicates;
 mod resize;
 mod summary;
 mod tessellate;

@@ -3,4 +3,5 @@ pub mod audio;
 pub mod file;
 pub mod image;
 pub mod table;
-pub mod video;
+// TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+// pub mod video;

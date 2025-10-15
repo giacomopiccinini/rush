@@ -1,6 +1,6 @@
 [package]
 name = "rush"
-version = "1.5.0"
+version = "1.6.0"
 edition = "2021"
 repository = "https://github.com/giacomopiccinini/rush"
 rust-version = "1.81"
@@ -15,7 +15,11 @@ categories = ["command-line-utilities"]
 [dependencies]
 anyhow = "1.0.91"
 clap = { version = "4.4.7", features = ["derive"] }
-ffmpeg-next = "6.1.0"
+# TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+# ffmpeg-next = "6.1.0"
+# gstreamer-video = "0.23.4"
+# gstreamer = "0.23.4"
+# gstreamer-app = "0.23.4"
 hound = "3.5.1"
 image = "0.24.7"
 lofty = "0.17.1"
@@ -24,12 +28,10 @@ rayon = "1.10.0"
 rubato = "0.16.0"
 walkdir = "2.4.0"
 hashbrown = "0.15.1"
-gstreamer-video = "0.23.4"
-gstreamer = "0.23.4"
-gstreamer-app = "0.23.4"
 regex = "1.11.1"
 tempfile = "3.16.0"
 sha2 = "0.10.8"
+spectrs = { version = "0.1.0", features = ["image"] }
 
 [dev-dependencies]
 uuid = { version = "1.0", features = ["v4"] }

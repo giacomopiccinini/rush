@@ -175,55 +175,99 @@ pub struct AudioTrimArgs {
 }
 
 #[derive(Debug, Parser)]
-pub struct VideoSummaryArgs {
-    /// Target directory or file
-    #[arg(required = true)]
-    pub target: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct VideoToFramesArgs {
-    /// Input video file
+pub struct AudioSpectrogramArgs {
+    /// Input file or directory
     #[arg(required = true)]
     pub input: String,
 
     /// Output directory
     #[arg(required = true)]
     pub output: String,
+
+    /// FFT size
+    #[arg(default_value_t = 2048)]
+    pub n_fft: usize,
+
+    /// Hop length
+    #[arg(default_value_t = 512)]
+    pub hop_length: usize,
+
+    /// Window length
+    #[arg(default_value_t = 2048)]
+    pub win_length: usize,
+
+    /// Number of mel bands (0 for no mel conversion)
+    #[arg(default_value_t = 128)]
+    pub n_mels: usize,
+
+    /// Minimum frequency for mel conversion
+    #[arg(default_value_t = 20.0)]
+    pub f_min: f32,
+
+    /// Maximum frequency for mel conversion (0 for sr/2)
+    #[arg(default_value_t = 0.0)]
+    pub f_max: f32,
+
+    /// Target sample rate (0 to use original)
+    #[arg(default_value_t = 22050)]
+    pub sr: u32,
+
+    /// Delete original file
+    #[arg(long, action = clap::ArgAction::SetTrue)]
+    pub delete_original: bool,
 }
 
-#[derive(Debug, Parser)]
-pub struct VideoFromFramesArgs {
-    /// Input video file
-    #[arg(required = true)]
-    pub input: String,
-
-    /// Target FPS
-    #[arg(required = true)]
-    pub fps: i32,
-
-    /// Output directory
-    #[arg(required = true)]
-    pub output: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct VideoDuplicatesArgs {
-    /// Target video directory
-    #[arg(required = true)]
-    pub target: String,
-}
-
-#[derive(Debug, Parser)]
-pub struct VideoThumbnailArgs {
-    /// Input video file
-    #[arg(required = true)]
-    pub input: String,
-
-    /// Output directory
-    #[arg(required = true)]
-    pub output: String,
-}
+// TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+// #[derive(Debug, Parser)]
+// pub struct VideoSummaryArgs {
+//     /// Target directory or file
+//     #[arg(required = true)]
+//     pub target: String,
+// }
+//
+// #[derive(Debug, Parser)]
+// pub struct VideoToFramesArgs {
+//     /// Input video file
+//     #[arg(required = true)]
+//     pub input: String,
+//
+//     /// Output directory
+//     #[arg(required = true)]
+//     pub output: String,
+// }
+//
+// #[derive(Debug, Parser)]
+// pub struct VideoFromFramesArgs {
+//     /// Input video file
+//     #[arg(required = true)]
+//     pub input: String,
+//
+//     /// Target FPS
+//     #[arg(required = true)]
+//     pub fps: i32,
+//
+//     /// Output directory
+//     #[arg(required = true)]
+//     pub output: String,
+// }
+//
+// #[derive(Debug, Parser)]
+// pub struct VideoDuplicatesArgs {
+//     /// Target video directory
+//     #[arg(required = true)]
+//     pub target: String,
+// }
+//
+// #[derive(Debug, Parser)]
+// pub struct VideoThumbnailArgs {
+//     /// Input video file
+//     #[arg(required = true)]
+//     pub input: String,
+//
+//     /// Output directory
+//     #[arg(required = true)]
+//     pub output: String,
+// }
 
 #[derive(Debug, Args)]
 pub struct TableSchemaArgs {

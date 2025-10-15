@@ -1,10 +1,24 @@
 use clap::{Args, Parser, Subcommand};
 use rush::{
-    AudioResampleArgs, AudioSplitArgs, AudioSummaryArgs, AudioTrimArgs, FileCountArgs,
-    FileExtensionArgs, ImageDuplicatesArgs, ImageResizeArgs, ImageSummaryArgs, ImageTessellateArgs,
-    ImageToLandscapeArgs, ImageToPortraitArgs, TableSchemaArgs, TableSummaryArgs, TableToCsvArgs,
-    TableToParquetArgs, VideoDuplicatesArgs, VideoFromFramesArgs, VideoSummaryArgs,
-    VideoThumbnailArgs, VideoToFramesArgs,
+    AudioResampleArgs,
+    AudioSpectrogramArgs,
+    AudioSplitArgs,
+    AudioSummaryArgs,
+    AudioTrimArgs,
+    FileCountArgs,
+    FileExtensionArgs,
+    ImageDuplicatesArgs,
+    ImageResizeArgs,
+    ImageSummaryArgs,
+    ImageTessellateArgs,
+    ImageToLandscapeArgs,
+    ImageToPortraitArgs,
+    TableSchemaArgs,
+    TableSummaryArgs,
+    TableToCsvArgs,
+    TableToParquetArgs,
+    // TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+    // VideoDuplicatesArgs, VideoFromFramesArgs, VideoSummaryArgs, VideoThumbnailArgs, VideoToFramesArgs,
 };
 
 /// Swiss-army knife for media inspection and manipulation
@@ -21,8 +35,9 @@ enum Command {
     Audio(AudioCommand),
     /// Commands for image files
     Image(ImageCommand),
-    /// Commands for video files
-    Video(VideoCommand),
+    // TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+    // /// Commands for video files
+    // Video(VideoCommand),
     /// Commands for generic files
     File(FileCommand),
     /// Commands for tabular files
@@ -45,6 +60,8 @@ enum AudioSubCommand {
     Resample(AudioResampleArgs),
     /// Trim audio file to given length (possibly with initial offset)
     Trim(AudioTrimArgs),
+    /// Create spectrogram from audio file
+    Spectrogram(AudioSpectrogramArgs),
 }
 
 #[derive(Debug, Args)]
@@ -69,25 +86,26 @@ enum ImageSubCommand {
     Duplicates(ImageDuplicatesArgs),
 }
 
-#[derive(Debug, Args)]
-struct VideoCommand {
-    #[clap(subcommand)]
-    command: VideoSubCommand,
-}
-
-#[derive(Debug, Subcommand)]
-enum VideoSubCommand {
-    /// Summary of video content of file or directory
-    Summary(VideoSummaryArgs),
-    /// Extract frames from video file
-    ToFrames(VideoToFramesArgs),
-    /// Collect frames into a video
-    FromFrames(VideoFromFramesArgs),
-    /// Find duplicated video files
-    Duplicates(VideoDuplicatesArgs),
-    /// Create video thumbnail
-    Thumbnail(VideoThumbnailArgs),
-}
+// TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+// #[derive(Debug, Args)]
+// struct VideoCommand {
+//     #[clap(subcommand)]
+//     command: VideoSubCommand,
+// }
+//
+// #[derive(Debug, Subcommand)]
+// enum VideoSubCommand {
+//     /// Summary of video content of file or directory
+//     Summary(VideoSummaryArgs),
+//     /// Extract frames from video file
+//     ToFrames(VideoToFramesArgs),
+//     /// Collect frames into a video
+//     FromFrames(VideoFromFramesArgs),
+//     /// Find duplicated video files
+//     Duplicates(VideoDuplicatesArgs),
+//     /// Create video thumbnail
+//     Thumbnail(VideoThumbnailArgs),
+// }
 
 #[derive(Debug, Args)]
 struct FileCommand {
@@ -130,6 +148,7 @@ fn main() {
             AudioSubCommand::Split(args) => rush::commands::audio::split::execute(args),
             AudioSubCommand::Resample(args) => rush::commands::audio::resample::execute(args),
             AudioSubCommand::Trim(args) => rush::commands::audio::trim::execute(args),
+            AudioSubCommand::Spectrogram(args) => rush::commands::audio::spectrogram::execute(args),
         },
         Command::Image(image_command) => match image_command.command {
             ImageSubCommand::Summary(args) => rush::commands::image::summary::execute(args),
@@ -141,13 +160,14 @@ fn main() {
             ImageSubCommand::ToPortrait(args) => rush::commands::image::to_portrait::execute(args),
             ImageSubCommand::Duplicates(args) => rush::commands::image::duplicates::execute(args),
         },
-        Command::Video(video_command) => match video_command.command {
-            VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),
-            VideoSubCommand::ToFrames(args) => rush::commands::video::to_frames::execute(args),
-            VideoSubCommand::FromFrames(args) => rush::commands::video::from_frames::execute(args),
-            VideoSubCommand::Duplicates(args) => rush::commands::video::duplicates::execute(args),
-            VideoSubCommand::Thumbnail(args) => rush::commands::video::thumbnail::execute(args),
-        },
+        // TEMPORARILY DISABLED DUE TO FFMPEG BUILD ISSUES
+        // Command::Video(video_command) => match video_command.command {
+        //     VideoSubCommand::Summary(args) => rush::commands::video::summary::execute(args),
+        //     VideoSubCommand::ToFrames(args) => rush::commands::video::to_frames::execute(args),
+        //     VideoSubCommand::FromFrames(args) => rush::commands::video::from_frames::execute(args),
+        //     VideoSubCommand::Duplicates(args) => rush::commands::video::duplicates::execute(args),
+        //     VideoSubCommand::Thumbnail(args) => rush::commands::video::thumbnail::execute(args),
+        // },
         Command::File(file_command) => match file_command.command {
             FileSubCommand::Count(args) => rush::commands::file::count::execute(args),
             FileSubCommand::Extension(args) => rush::commands::file::extension::execute(args),

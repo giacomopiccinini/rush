@@ -43,7 +43,7 @@ pub fn execute(args: VideoSummaryArgs) -> Result<()> {
 
     // Raise error if no files are admissible
     if files.is_empty() {
-        return Err(anyhow::Error::msg("No admissible image files detected"));
+        return Err(anyhow::Error::msg("No admissible video files detected"));
     }
 
     // Process files
